@@ -1,11 +1,15 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <Arduino.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include "secrets.h" // Contains your network ssid and password
 
 const char * ssid = SECRET_SSID;
-const char * pass = SECRET_PASSWORD;
+const char * pass = SECRET_ROUTER_PASSWORD;
+
+const char * user = SECRET_AUTH_USER;
+const char * password = SECRET_AUTH_PASSWORD;
 
 // Needed for NTP server
 WiFiUDP ntpUDP;
@@ -27,7 +31,8 @@ IPAddress dns(192, 168, 5, 1);  //DNS
 const char* deviceName = "psihi";
 
 WiFiClient client;
-WiFiServer server(80);
+//WiFiServer server(80);
+ESP8266WebServer server; // server variable
 
 // Defining time for the site request
 // Current time
@@ -47,6 +52,10 @@ boolean getTimeFromServer = true; // true when x hours pass, then the time updat
 int hour = 0, minute = 0, second = 0, day = 0, month = 0, year = 0;
 int daysOfMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 NTPClient::paup date_struct; // Used to extract day, month and year
+
+String water_heater = "1";
+void serverSection();
+void water_heater_state();
 
 void updateNTPTime() {
     timeClient.begin();
@@ -96,11 +105,13 @@ void setup() {
       Serial.print("IP address:");
       Serial.println(WiFi.localIP());
 
+      serverSection();
+      /*
       server.begin();
       Serial.println("HTTP server started");
       updateNTPTime(); // Getting the time from the NTP server for the first time
       startClock = millis(); // Starting to count our local clock
-
+      */
 }
 
 void relaySwitcher() {
@@ -155,6 +166,7 @@ void theClock() {
     }
 }
 
+/*
 void wifiClient() {
     WiFiClient client = server.available();
     if (client) {                             // If a new client connects,
@@ -199,10 +211,38 @@ void wifiClient() {
             }
         }
     }
-}
+}*/
 
 void loop() {     
     theClock();
-    relaySwitcher();
-    wifiClient();
+    //relaySwitcher();
+    server.handleClient();
+    //wifiClient();
+}
+
+void serverSection() {
+    server.on("/", []() {
+      if (!server.authenticate(SECRET_AUTH_USER, SECRET_AUTH_PASSWORD)) {
+          return server.requestAuthentication();
+      }
+      server.send(200, "text/html", "<html><h1>Time: "+String(hour)+":"+String(minute)+":"+String(second)+"<br>Date: "+String(day)+"."+String(month)+"."+String(year)+"</h1></html></br>"+String(hour)+":"+String(minute)+":"+String(second));  
+    });
+    server.on("/water_heater", water_heater_state);
+
+    server.begin();
+}
+
+void water_heater_state() {
+    if (!server.authenticate(SECRET_AUTH_USER, SECRET_AUTH_PASSWORD)) {
+          return server.requestAuthentication();
+    }
+    if (water_heater == "0") {
+        water_heater = "1";
+        digitalWrite(in1, HIGH);
+        server.send(200, "text/html", "{'water_heater': '" + water_heater + "'}");
+    } else {
+        water_heater = "0";
+        digitalWrite(in1, LOW);
+        server.send(200, "text/html", "{'water_heater': '" + water_heater + "'}");
+    }
 }

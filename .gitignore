@@ -1,0 +1,6 @@
+.pioenvs
+.piolibdeps
+src/secrets.h
+.pio/libdeps/
+.pio/
+.vscode/
