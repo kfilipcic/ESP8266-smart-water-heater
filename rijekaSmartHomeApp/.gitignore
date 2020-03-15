@@ -12,3 +12,6 @@
 /captures
 .externalNativeBuild
 .cxx
+.gitignore
+.travis.yml
+/platformIOproject/src/secrets.h
