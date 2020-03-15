@@ -1,15 +1,33 @@
+#define bufferMax 10000
+#define queryMax 10000
+
+#include <Arduino.h>
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <Arduino.h>
+
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+
 #include "secrets.h" // Contains your network ssid and password
+
+#include <WebParser.h>
+
+int bufferSize;
+char queryBuffer[bufferMax];
+char param_value[queryMax];
+unsigned long arduinoSession = 1;
+
+WebParser webParser;
+WiFiClient client;
 
 const char * ssid = SECRET_SSID;
 const char * pass = SECRET_ROUTER_PASSWORD;
 
 const char * user = SECRET_AUTH_USER;
 const char * password = SECRET_AUTH_PASSWORD;
+
+WiFiServer server(80);
 
 // Needed for NTP server
 WiFiUDP ntpUDP;
@@ -22,17 +40,7 @@ String header;
 // 5 is actually D1 on the ESP8266-12E
 int in1 = 5;
 
-//Static IP address configuration
-IPAddress staticIP(192, 168, 5, 20); //ESP static ip
-IPAddress gateway(192, 168, 5, 1);   //IP Address of your WiFi Router (Gateway)
-IPAddress subnet(255, 255, 255, 0);  //Subnet mask
-IPAddress dns(192, 168, 5, 1);  //DNS
- 
-const char* deviceName = "psihi";
-
-WiFiClient client;
-//WiFiServer server(80);
-ESP8266WebServer server; // server variable
+const char* deviceName = "pc";
 
 // Defining time for the site request
 // Current time
@@ -54,8 +62,13 @@ int daysOfMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 NTPClient::paup date_struct; // Used to extract day, month and year
 
 String water_heater = "1";
+String processor();
 void serverSection();
 void water_heater_state();
+void handleLogin();
+void secureRedirect();
+void parseReceivedRequest(WiFiClient client);
+boolean loggedIn();
 
 void updateNTPTime() {
     timeClient.begin();
@@ -77,7 +90,7 @@ void updateNTPTime() {
 }
 
 void setup() {
-       Serial.begin(9600);
+       Serial.begin(115200);
 
        // Making the relay pin output
        pinMode(in1, OUTPUT);
@@ -91,27 +104,28 @@ void setup() {
        WiFi.disconnect();  //Prevent connecting to wifi based on previous configuration
   
        WiFi.hostname(deviceName);      // DHCP Hostname (useful for finding device for static lease)
-       WiFi.config(staticIP, gateway, subnet, dns);
+       WiFi.config(staticIP, dns, gateway, subnet);
        WiFi.begin(ssid, pass); 
        WiFi.mode(WIFI_STA);
-
-       while (WiFi.status() != WL_CONNECTED) 
-          {
+      
+       while (WiFi.status() != WL_CONNECTED) {
             delay(500);
             Serial.print(".");
        }
-      Serial.println("");
+
       Serial.println("WiFi connected"); 
       Serial.print("IP address:");
       Serial.println(WiFi.localIP());
-
-      serverSection();
-      /*
+      Serial.println(WiFi.subnetMask());
+      Serial.println(WiFi.gatewayIP());
+      
+      //configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+      
       server.begin();
-      Serial.println("HTTP server started");
+
       updateNTPTime(); // Getting the time from the NTP server for the first time
       startClock = millis(); // Starting to count our local clock
-      */
+
 }
 
 void relaySwitcher() {
@@ -166,83 +180,204 @@ void theClock() {
     }
 }
 
-/*
-void wifiClient() {
-    WiFiClient client = server.available();
-    if (client) {                             // If a new client connects,
-        Serial.println("->Request from client.");          // print a message out in the serial port
-        String currentLine = "";                // make a String to hold incoming data from the client
-        currentTime = millis();
-        previousTime = currentTime;
+void loop() {     
+    theClock();
 
-        while (client.connected() && currentTime - previousTime <= timeoutTime) { // loop while the client's connected
-            relaySwitcher(); // Controlling the relay pin during HTTP requests
-            currentTime = millis();         
-            if (client.available()) {             // if there's bytes to read from the client,
-                char c = client.read();             // read a byte, then
-                Serial.write(c);                    // print it out the serial monitor
-                header += c;
-                if (c == '\n') {                    // if the byte is a newline character
-                    // if the current line is blank, you got two newline characters in a row.
-                    // that's the end of the client HTTP request, so send a response:
-                    if (currentLine.length() == 0) {
-                        // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-                        // and a content-type so the client knows what's coming, then a blank line:
-                        client.println("HTTP/1.1 200 OK");
-                        client.println("Content-type:text/html");
-                        client.println("Connection: close");
-                        client.println();
+    client = server.available();
+    if (client) {
+        boolean currentLineIsBlank = true;
+        bufferSize = 0;
 
-                        client.print("<html><h1>Time: "+String(hour)+":"+String(minute)+":"+String(second)+"<br>Date: "+String(day)+"."+String(month)+"."+String(year)+"</h1></html>");
-                        client.println();
-                        Serial.println(String(hour)+":"+String(minute)+":"+String(second));
-                        break;
-                        // Clear the header variable
-                        header = "";
-                        // Close the connection
-                        client.stop();
-                        Serial.println("Client disconnected.");
-                        Serial.println("");
-                    }
-                    else if (c != '\r') {  // if you got anything else but a carriage return character,
-                        currentLine += c;      // add it to the end of the currentLine
-                    }
+        while (client.connected()) {
+            theClock();
+            if (client.available()) {
+                theClock();
+                char c = client.read();
+
+                if (bufferSize < bufferMax) queryBuffer[bufferSize++] = c;
+                if (c == '\n' && currentLineIsBlank) {
+                    parseReceivedRequest(client);
+                    bufferSize = 0;
+                    webParser.clearBuffer(queryBuffer, bufferMax);
+                    break;
+                }
+                if (c == '\n') {
+                    currentLineIsBlank = true;
+                }
+                else if (c != '\r') {
+                    currentLineIsBlank = false;
                 }
             }
         }
+        delay(10);
+
+        client.flush();
+        client.stop();
     }
-}*/
 
-void loop() {     
-    theClock();
-    //relaySwitcher();
-    server.handleClient();
-    //wifiClient();
-}
-
-void serverSection() {
-    server.on("/", []() {
-      if (!server.authenticate(SECRET_AUTH_USER, SECRET_AUTH_PASSWORD)) {
-          return server.requestAuthentication();
-      }
-      server.send(200, "text/html", "<html><h1>Time: "+String(hour)+":"+String(minute)+":"+String(second)+"<br>Date: "+String(day)+"."+String(month)+"."+String(year)+"</h1></html></br>"+String(hour)+":"+String(minute)+":"+String(second));  
-    });
-    server.on("/water_heater", water_heater_state);
-
-    server.begin();
 }
 
 void water_heater_state() {
-    if (!server.authenticate(SECRET_AUTH_USER, SECRET_AUTH_PASSWORD)) {
-          return server.requestAuthentication();
-    }
     if (water_heater == "0") {
         water_heater = "1";
         digitalWrite(in1, HIGH);
-        server.send(200, "text/html", "{'water_heater': '" + water_heater + "'}");
+        client.println("{'water_heater': '" + water_heater + "'}");
     } else {
         water_heater = "0";
         digitalWrite(in1, LOW);
-        server.send(200, "text/html", "{'water_heater': '" + water_heater + "'}");
+        client.println("{'water_heater': '" + water_heater + "'}");
     }
+}
+
+void renderHtmlPage(char *page, WiFiClient client) {
+    String pagestr = (String)page;
+
+    //Serial.println(pagestr);
+   
+    String time = String(hour)+":"+String(minute)+":"+String(second);
+    String date = String(day)+"."+String(month)+"."+String(year);
+
+    theClock();
+
+    String httpHeader =
+        String("HTTP/1.1 200 OK\r\n") + 
+               "Content-Type: text/html\r\n" + 
+               "Connection: close\r\n";
+
+    client.println(httpHeader);
+
+    if (pagestr.indexOf("logtut.htm") != -1) {
+        client.println(F("<!DOCTYPE html><html><head>"));
+        client.println(F("<meta name='viewport' content='user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width' />"));
+        client.println(F("<title>Green Controller</title>"));
+        client.println(F("<style>#loginform{width: 90%;background: #EEE;box-shadow: 2px 2px 10px #999;padding: 10px;display: block;margin: 0 auto 0 auto;}"));
+		client.println(F("@media screen and (min-width: 32em) {#loginform{width: 400px;}}"));
+        client.println(F("</style><link rel='icon' href='data:,'></head><body><div><h1>Login</h1></div>"));
+        client.println(F("<form id='loginform' action='/login' method='GET'>"));
+        client.println(F("<input type='text' name='username' placeholder='Username'>"));
+	    client.println(F("<input type='password' name='password' autocomplete='on' placeholder='Password'>"));
+		client.println(F("<br><input type='submit' value='Submit'></form><p><a href='entry.htm'>entry</a></p></body></html>"));
+    }
+    else if (pagestr.indexOf("entry.htm") != -1) {
+        client.println("<html><body></form><h1>Time: " + time + "</h1></br><h1>Date: " + date + "</h1></br></body></html>");
+    }
+
+    else if (pagestr.indexOf("water_heater") != -1) {
+        water_heater_state();
+    }
+    else if (pagestr.indexOf("updateTime") != -1) {
+        updateNTPTime();
+    }
+}
+
+void parseReceivedRequest(WiFiClient client) 
+{
+  theClock();
+  //find query vars
+  //Serial.println(" ");
+  Serial.println("*************");
+  Serial.println(queryBuffer);
+  Serial.println("*************");
+  
+  //  GET /index.htm HTTP/1.1
+  // GET / HTTP/1.1
+  if(webParser.contains(queryBuffer, "GET / HTTP/1.1") || webParser.contains(queryBuffer, ".htm ")) {
+      theClock();
+    // *********** Render HTML ***************
+   // code not to render form request.
+   // GET /index.htm?devicelist=1&nocache=549320.8093103021 HTTP/1.1
+
+    if(loggedIn()) {
+       //render html pages only if you've logged in
+       webParser.clearBuffer(param_value, queryMax);
+       webParser.fileUrl(queryBuffer, param_value);
+       // default page 
+       theClock();
+       if(strcmp(param_value, "/") == 0) {
+         strcpy(param_value, "entry.htm");
+         client.println(F("HTTP/1.1 302 Found"));
+         client.println(F("Location: /entry.htm")); 
+         client.println(F("Connection: Close"));
+
+       }
+       //else load whatever
+       Serial.println(param_value);
+       renderHtmlPage(param_value, client);
+       
+     } else {  
+        //loggin form
+        char page[] = "logtut.htm";
+        //set it so it's not the same all the time.
+        arduinoSession = millis();
+        renderHtmlPage(page, client);
+        
+    }//login
+
+   } else {
+    webParser.clearBuffer(param_value, queryMax);
+    
+    if(webParser.contains(queryBuffer, "login")) 
+    { 
+      webParser.parseQuery(queryBuffer, "username", param_value);
+
+      char user[30];
+      strcpy(user,param_value);
+
+      webParser.clearBuffer(param_value, queryMax);
+      webParser.parseQuery(queryBuffer, "password", param_value);
+      char pass[30];
+      strcpy(pass,param_value);
+
+       // ***************** LOGIN ********************   
+      Serial.println(user);
+      Serial.println(pass);
+
+      if(webParser.compare(SECRET_AUTH_USER,user) && webParser.compare(SECRET_AUTH_PASSWORD,pass)) {
+          
+          arduinoSession = millis();
+          //***** print out Session ID
+          // Serial.println(arduinoSession);
+          // successful login and redirect to a page
+          client.println(F("HTTP/1.1 302 Found"));
+          client.print(F("Set-cookie: ARDUINOSESSIONID="));
+          client.print(arduinoSession);
+          client.println(F("; HttpOnly"));       
+          client.println(F("Location: /entry.htm")); 
+          client.println(F("Connection: Close"));
+          client.println();
+        
+      } else {
+        // redirect back to login if wrong user / pass
+          client.println(F("HTTP/1.1 302 Found"));
+          client.println(F("Location: /logtut.htm"));
+          client.println(F("Connection: Close"));
+          client.println();
+      } // if login
+        
+    } else if(webParser.contains(queryBuffer, "logout")) 
+    {
+          // kill session ID
+          arduinoSession = 1;
+          // redirect back to login if wrong user / pass
+          client.println(F("HTTP/1.1 302 Found"));
+          client.println(F("Location: /logtut.htm"));
+          client.println(F("Connection: Close"));
+          client.println();
+    }
+
+  }//end main else
+}// end function
+
+boolean loggedIn() 
+{
+   webParser.clearBuffer(param_value,queryMax);
+   //going to need a parse cookie function
+   webParser.parseQuery(queryBuffer, "ARDUINOSESSIONID", param_value);
+  
+   if(arduinoSession == atol(param_value)) {
+      return true;
+   } else {
+      return false; 
+   }
+  return false;
 }

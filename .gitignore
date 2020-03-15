@@ -4,3 +4,6 @@ src/secrets.h
 .pio/libdeps/
 .pio/
 .vscode/
+budsobude.cpp
+src/entry.htm
+src/logtut.htm
