@@ -1,9 +1,9 @@
-platformIOproject/.pioenvs
-platformIOproject/.piolibdeps
+.pioenvs
+.piolibdeps
 platformIOproject/src/secrets.h
-platformIOproject/.pio/libdeps/
-platformIOproject/.pio/
-platformIOproject/.vscode/
+.pio/libdeps/
+.pio/
+.vscode/
 platformIOproject/budsobude.cpp
 platformIOproject/src/entry.htm
 platformIOproject/src/logtut.htm
