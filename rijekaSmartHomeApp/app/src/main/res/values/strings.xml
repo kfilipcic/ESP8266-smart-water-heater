@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">rijekaSmartHomeApp</string>
+    <string name="usernameHint">Username</string>
+    <string name="passwordHint">Password</string>
+    <string name="textviewLogin">Login:</string>
+    <string name="loginButtonText">login</string>
+    <string name="mainUrl">http://paup.hopto.org/</string>
+    <string name="toggleButtonText">toggle</string>
+    <string name="timeText">N/A</string>
+    <string name="waterHeaterButtonDescription">Switches the water heater on and off</string>
 </resources>

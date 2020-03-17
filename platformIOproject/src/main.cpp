@@ -64,7 +64,8 @@ NTPClient::paup date_struct; // Used to extract day, month and year
 String water_heater = "1";
 String processor();
 void serverSection();
-void water_heater_state();
+void water_heater_check_state();
+void water_heater_switcher();
 void handleLogin();
 void secureRedirect();
 void parseReceivedRequest(WiFiClient client);
@@ -209,7 +210,7 @@ void loop() {
                 }
             }
         }
-        delay(10);
+        //delay(10);
 
         client.flush();
         client.stop();
@@ -217,7 +218,11 @@ void loop() {
 
 }
 
-void water_heater_state() {
+void water_heater_check_state() {
+    client.println("{'water_heater': '" + water_heater + "'}");
+}
+
+void water_heater_switcher(){
     if (water_heater == "0") {
         water_heater = "1";
         digitalWrite(in1, HIGH);
@@ -241,12 +246,12 @@ void renderHtmlPage(char *page, WiFiClient client) {
 
     String httpHeader =
         String("HTTP/1.1 200 OK\r\n") + 
-               "Content-Type: text/html\r\n" + 
+               "Content-Type: text/html\r\n";
                "Connection: close\r\n";
 
     client.println(httpHeader);
 
-    if (pagestr.indexOf("logtut.htm") != -1) {
+    if (pagestr.indexOf("logtut.html") != -1) {
         client.println(F("<!DOCTYPE html><html><head>"));
         client.println(F("<meta name='viewport' content='user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width' />"));
         client.println(F("<title>Green Controller</title>"));
@@ -258,12 +263,14 @@ void renderHtmlPage(char *page, WiFiClient client) {
 	    client.println(F("<input type='password' name='password' autocomplete='on' placeholder='Password'>"));
 		client.println(F("<br><input type='submit' value='Submit'></form><p><a href='entry.htm'>entry</a></p></body></html>"));
     }
-    else if (pagestr.indexOf("entry.htm") != -1) {
+    else if (pagestr.indexOf("entry.html") != -1) {
         client.println("<html><body></form><h1>Time: " + time + "</h1></br><h1>Date: " + date + "</h1></br></body></html>");
     }
-
-    else if (pagestr.indexOf("water_heater") != -1) {
-        water_heater_state();
+    else if (pagestr.indexOf("water_heater_check") != -1) {
+        water_heater_check_state();
+    }
+    else if (pagestr.indexOf("water_heater_switch") != -1) {
+        water_heater_switcher();
     }
     else if (pagestr.indexOf("updateTime") != -1) {
         updateNTPTime();
@@ -281,7 +288,7 @@ void parseReceivedRequest(WiFiClient client)
   
   //  GET /index.htm HTTP/1.1
   // GET / HTTP/1.1
-  if(webParser.contains(queryBuffer, "GET / HTTP/1.1") || webParser.contains(queryBuffer, ".htm ")) {
+  if(webParser.contains(queryBuffer, "GET / HTTP/1.1") || webParser.contains(queryBuffer, ".html")) {
       theClock();
     // *********** Render HTML ***************
    // code not to render form request.
@@ -294,10 +301,9 @@ void parseReceivedRequest(WiFiClient client)
        // default page 
        theClock();
        if(strcmp(param_value, "/") == 0) {
-         strcpy(param_value, "entry.htm");
+         strcpy(param_value, "entry.html");
          client.println(F("HTTP/1.1 302 Found"));
-         client.println(F("Location: /entry.htm")); 
-         client.println(F("Connection: Close"));
+         client.println(F("Location: /entry.html")); 
 
        }
        //else load whatever
@@ -306,7 +312,7 @@ void parseReceivedRequest(WiFiClient client)
        
      } else {  
         //loggin form
-        char page[] = "logtut.htm";
+        char page[] = "logtut.html";
         //set it so it's not the same all the time.
         arduinoSession = millis();
         renderHtmlPage(page, client);
@@ -333,7 +339,6 @@ void parseReceivedRequest(WiFiClient client)
       Serial.println(pass);
 
       if(webParser.compare(SECRET_AUTH_USER,user) && webParser.compare(SECRET_AUTH_PASSWORD,pass)) {
-          
           arduinoSession = millis();
           //***** print out Session ID
           // Serial.println(arduinoSession);
@@ -342,15 +347,13 @@ void parseReceivedRequest(WiFiClient client)
           client.print(F("Set-cookie: ARDUINOSESSIONID="));
           client.print(arduinoSession);
           client.println(F("; HttpOnly"));       
-          client.println(F("Location: /entry.htm")); 
-          client.println(F("Connection: Close"));
+          client.println(F("Location: /entry.html")); 
           client.println();
         
       } else {
         // redirect back to login if wrong user / pass
           client.println(F("HTTP/1.1 302 Found"));
-          client.println(F("Location: /logtut.htm"));
-          client.println(F("Connection: Close"));
+          client.println(F("Location: /logtut.html"));
           client.println();
       } // if login
         
@@ -360,8 +363,7 @@ void parseReceivedRequest(WiFiClient client)
           arduinoSession = 1;
           // redirect back to login if wrong user / pass
           client.println(F("HTTP/1.1 302 Found"));
-          client.println(F("Location: /logtut.htm"));
-          client.println(F("Connection: Close"));
+          client.println(F("Location: /logtut.html"));
           client.println();
     }
 

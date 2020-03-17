@@ -7,17 +7,65 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/toggleButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="288dp"
-        android:text="toggle"
+
+    <LinearLayout
+        android:id="@+id/loginLayout"
+        android:layout_width="410dp"
+        android:layout_height="219dp"
+        android:layout_marginTop="250dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingBottom="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.081" />
+        app:layout_constraintVertical_bias="0.0">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/textviewLogin"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="5dp" />
+
+        <EditText
+            android:id="@+id/usernameText"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="@string/usernameHint"
+            android:inputType="textPersonName" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="5dp" />
+
+        <EditText
+            android:id="@+id/passwordText"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="@string/passwordHint"
+            android:inputType="textPassword" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="5dp" />
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:text="@string/loginButtonText"></Button>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
