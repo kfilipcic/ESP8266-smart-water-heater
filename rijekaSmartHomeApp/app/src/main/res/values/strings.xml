@@ -8,4 +8,6 @@
     <string name="toggleButtonText">toggle</string>
     <string name="timeText">N/A</string>
     <string name="waterHeaterButtonDescription">Switches the water heater on and off</string>
+    <string name="currentTimeString">Server time:</string>
+    <string name="rememberPasswordText">Remember password</string>
 </resources>

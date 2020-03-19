@@ -1,12 +1,10 @@
 package com.example.rijekasmarthomeapp
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
-import kotlinx.android.synthetic.main.activity_main_screen.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -16,8 +14,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.net.CookieHandler
-import java.net.CookieManager
 
 class MainScreen : AppCompatActivity() {
 
@@ -47,10 +43,16 @@ class MainScreen : AppCompatActivity() {
 
                 val timeDateElements :Elements = doc.select("h1")
 
-               //val timeDateString : Array<String> = emptyArray()
+               val timeDateString = arrayListOf<String>()
 
                 timeDateElements.forEach { element :Element ->
-                //    timeDateString.add(element.text())
+                    timeDateString.add(element.text().toString())
+                }
+
+                // Shows the server time - needs to be in this method
+                // because it changes the UI during runtime
+                runOnUiThread {
+                    timeText.text = timeDateString[0]
                 }
             }
         }
@@ -81,4 +83,5 @@ class MainScreen : AppCompatActivity() {
             waterHeater(waterHeaterSwitchUrl)
         }
     }
+
 }

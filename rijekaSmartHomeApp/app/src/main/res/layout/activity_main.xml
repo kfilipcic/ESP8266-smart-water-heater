@@ -59,6 +59,17 @@
             android:layout_width="wrap_content"
             android:layout_height="5dp" />
 
+        <CheckBox
+            android:id="@+id/loginCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/rememberPasswordText" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="5dp" />
+
         <Button
             android:id="@+id/loginButton"
             android:layout_width="wrap_content"
