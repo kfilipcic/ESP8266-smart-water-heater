@@ -103,6 +103,7 @@ class MainActivity : AppCompatActivity() {
                     Intent(this, MainScreen::class.java)
                         .putExtra("Map", loginCookies as Serializable)
                 )
+                finish()
             }
 
             // Show (and create) message if the login isn't successful

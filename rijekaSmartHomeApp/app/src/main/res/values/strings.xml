@@ -4,10 +4,12 @@
     <string name="passwordHint">Password</string>
     <string name="textviewLogin">Login:</string>
     <string name="loginButtonText">login</string>
-    <string name="mainUrl">http://paup.hopto.org/</string>
+    <string name="mainUrl">http://psih.duckdns.org/</string>
     <string name="toggleButtonText">toggle</string>
     <string name="timeText">N/A</string>
+    <string name="dateText">N/A</string>
     <string name="waterHeaterButtonDescription">Switches the water heater on and off</string>
     <string name="currentTimeString">Server time:</string>
     <string name="rememberPasswordText">Remember password</string>
+    <string name="refreshActivity">Refresh</string>
 </resources>

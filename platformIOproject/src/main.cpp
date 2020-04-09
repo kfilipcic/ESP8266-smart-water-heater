@@ -76,9 +76,9 @@ void updateNTPTime() {
     timeClient.update();
     second = timeClient.getSeconds();
     minute = timeClient.getMinutes();
-    hour = timeClient.getHours()+1; // Adding 1 hour because UTC+1
+    hour = timeClient.getHours()+2; // Adding 1 hour because UTC+1
     if (hour >= 24) {
-        hour = 0;
+        hour = 1;
         day++;
     }
     date_struct = timeClient.getFormattedDate();

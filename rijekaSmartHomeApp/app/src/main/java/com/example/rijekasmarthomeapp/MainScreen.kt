@@ -2,6 +2,9 @@ package com.example.rijekasmarthomeapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -32,6 +35,7 @@ class MainScreen : AppCompatActivity() {
 
         val toggleWaterHeaterButton: ImageButton = findViewById(R.id.toggleWaterHeaterButton)
         val timeText: TextView = findViewById(R.id.timeText)
+        val dateText: TextView = findViewById(R.id.dateText)
 
         fun timeDate() {
             CoroutineScope(IO).launch {
@@ -52,7 +56,34 @@ class MainScreen : AppCompatActivity() {
                 // Shows the server time - needs to be in this method
                 // because it changes the UI during runtime
                 runOnUiThread {
-                    timeText.text = timeDateString[0]
+                    dateText.text = timeDateString[1].replace("Date: ", "")
+                    timeText.text = timeDateString[0].replace("Time: ", "")
+
+                    // Show single digit numbers as double digits (using regex)
+                    // Example: 03:30:05 instead of 3:30:5
+                    // Only for time
+                    var regex = "(\\d+):(\\d+):(\\d+)".toRegex()
+                    var match = regex.find(timeText.text)
+
+                    if (match != null) {
+                        var h: String = match.groupValues[1]
+                        var m: String = match.groupValues[2]
+                        var s: String = match.groupValues[3]
+
+                        println(match.groupValues.size)
+
+                        for (i: Int in  0..match.groupValues.size-1) {
+                            if (i > 0 && match.groupValues[i].length < 2) {
+                                when(i) {
+                                    1 -> h = "0" + h
+                                    2 -> m = "0" + m
+                                    3 -> s = "0" + s
+                                }
+                            }
+                        }
+
+                        timeText.text = h + ":" + m + ":" + s
+                    }
                 }
             }
         }
@@ -82,6 +113,23 @@ class MainScreen : AppCompatActivity() {
         toggleWaterHeaterButton.setOnClickListener {
             waterHeater(waterHeaterSwitchUrl)
         }
+
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.refreshActivityButton) {
+            finish()
+            overridePendingTransition(0, 0)
+            startActivity(intent)
+            overridePendingTransition(0, 0)
+        }
+        return super.onOptionsItemSelected(item)
     }
 
 }
