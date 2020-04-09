@@ -3,6 +3,9 @@
 ## Screenshots
 ### Browser screenshots
 ![Browser login](https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/browser_login.jpg?raw=true)
+<kbd>
+  <img src="https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/browser_login.jpg?raw=true">
+</kbd>
 ![Browser time](https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/browser_time.jpg?raw=true)
 Main page when logged in through a browser, shows the current date and time (it doesn't change in real-time, you have to refresh the page)
 ![Browser api check](https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/api_check.jpg?raw=true)
