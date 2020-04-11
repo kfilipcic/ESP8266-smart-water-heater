@@ -37,4 +37,7 @@ dependencies {
     // jsoup HTML parser library @ https://jsoup.org/
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
+    // Material design library for date and time picker
+    implementation 'com.google.android.material:material:1.2.0-alpha04'
+
 }

@@ -12,4 +12,14 @@
     <string name="currentTimeString">Server time:</string>
     <string name="rememberPasswordText">Remember password</string>
     <string name="refreshActivity">Refresh</string>
+    <string name="waterHeater1">Water heater 1</string>
+    <string name="waterHeater2">Water heater 2</string>
+    <string name="heater1">Heater 1</string>
+    <string name="ruleApplies">Rule applies from:</string>
+    <string name="todayText">Today</string>
+    <string name="isOnFromTo">Is on from</string>
+    <string name="toText">to</string>
+    <string name="discardRulesText">Remove current rule</string>
+    <string name="applyText">Apply</string>
+    <string name="cancelText">Cancel</string>
 </resources>

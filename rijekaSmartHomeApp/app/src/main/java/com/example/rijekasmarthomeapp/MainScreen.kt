@@ -1,13 +1,14 @@
 package com.example.rijekasmarthomeapp
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
+import android.view.*
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.rijekasmarthomeapp.R.string.waterHeater1
+import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -36,6 +37,7 @@ class MainScreen : AppCompatActivity() {
         val toggleWaterHeaterButton: ImageButton = findViewById(R.id.toggleWaterHeaterButton)
         val timeText: TextView = findViewById(R.id.timeText)
         val dateText: TextView = findViewById(R.id.dateText)
+
 
         fun timeDate() {
             CoroutineScope(IO).launch {
@@ -114,6 +116,31 @@ class MainScreen : AppCompatActivity() {
             waterHeater(waterHeaterSwitchUrl)
         }
 
+        /*
+        toggleWaterHeaterButton.setOnTouchListener(object: View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        picker.show(supportFragmentManager, picker.toString())
+                    }
+                }
+                return v?.onTouchEvent(event) ?: true
+            }
+        })*/
+
+
+        val intent = Intent(this, DeviceDialog::class.java)
+
+        toggleWaterHeaterButton.setOnLongClickListener (object: View.OnLongClickListener {
+            override fun onLongClick(v: View?): Boolean {
+                startActivity(intent.putExtra("title", getString(waterHeater1)))
+                return false
+            }
+        })
+
+
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -133,3 +160,4 @@ class MainScreen : AppCompatActivity() {
     }
 
 }
+

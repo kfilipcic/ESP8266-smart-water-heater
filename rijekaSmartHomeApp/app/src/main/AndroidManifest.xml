@@ -14,7 +14,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".MainScreen"></activity>
+        <activity android:name=".DeviceDialog"
+                  android:label="Device"
+                  android:theme="@style/materialCalendarTheme"></activity>
+        <activity
+            android:name=".MainScreen"
+            android:theme="@style/materialCalendarTheme" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
