@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.*
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.rijekasmarthomeapp.R.string.waterHeater1
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -20,10 +22,26 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
 class MainScreen : AppCompatActivity() {
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var viewAdapter: RecyclerView.Adapter<*>
+    private lateinit var viewManager: RecyclerView.LayoutManager
+
+    private var devicesList: MutableList<Device> = mutableListOf<Device>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_screen)
+
+        viewManager = LinearLayoutManager(this)
+        viewAdapter = DevicesAdapter(devicesList)
+
+        prepareDeviceListData()
+
+        recyclerView = findViewById<RecyclerView>(R.id.devices_list).apply {
+            setHasFixedSize(true)
+            layoutManager = viewManager
+            adapter = viewAdapter
+        }
 
         val waterHeaterCheckUrl: String = "water_heater_check.html"
         val waterHeaterSwitchUrl: String = "water_heater_switch.html"
@@ -138,9 +156,6 @@ class MainScreen : AppCompatActivity() {
             }
         })
 
-
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -157,6 +172,15 @@ class MainScreen : AppCompatActivity() {
             overridePendingTransition(0, 0)
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun prepareDeviceListData() {
+        val waterHeater: Device = Device("waterHeater1", false)//, "50.5", "20.5")
+        System.out.println(devicesList)
+        devicesList.add(waterHeater)
+        devicesList.add(waterHeater)
+        devicesList.add(waterHeater)
+        System.out.println(devicesList)
     }
 
 }

@@ -234,6 +234,11 @@ void water_heater_switcher(){
     }
 }
 
+void get_current_temperature(String deviceString, int num, double tempValue) {
+    // return random number between 20 and 90 (representing degrees in Celsius) in JSON format
+    client.println("{'" + deviceString + "_" + String(num) + "': '" + String(tempValue) + "'}");
+}
+
 void renderHtmlPage(char *page, WiFiClient client) {
     String pagestr = (String)page;
 
@@ -275,6 +280,13 @@ void renderHtmlPage(char *page, WiFiClient client) {
     else if (pagestr.indexOf("updateTime") != -1) {
         updateNTPTime();
     }
+    else if (pagestr.indexOf("water_heater_1_temperature") != -1) {
+        get_current_temperature("water_heater_water_temp", 1, random(2000, 9000) / 100.0); // temperature value is random and between 20 and 90 degrees Celsius
+    }
+    else if (pagestr.indexOf("water_heater_1_room_temperature") != -1) {
+        get_current_temperature("water_heater_room_temp", 1, random(1900, 2400) / 100.0);
+    }
+
 }
 
 void parseReceivedRequest(WiFiClient client) 

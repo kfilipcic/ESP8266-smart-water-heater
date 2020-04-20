@@ -51,6 +51,13 @@
         android:layout_width="match_parent"
         android:layout_height="10dp"/>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/devices_list"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </androidx.recyclerview.widget.RecyclerView>
+
     <LinearLayout
         android:id="@+id/buttonsLinearLayout"
         android:layout_width="match_parent"
