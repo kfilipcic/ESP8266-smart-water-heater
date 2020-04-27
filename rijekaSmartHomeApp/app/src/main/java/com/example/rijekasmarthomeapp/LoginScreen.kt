@@ -33,6 +33,11 @@ class MainActivity : AppCompatActivity() {
 
         val usernameEditText: EditText = findViewById(R.id.usernameText)
         val passwordEditText: EditText = findViewById(R.id.passwordText)
+
+        //REMOVE when done debugging
+        usernameEditText.setText("rijekastan")
+        passwordEditText.setText("A3C01610A252")
+
         val saveLoginCheckbox: CheckBox = findViewById(R.id.loginCheckbox)
 
         val loginButton: Button = findViewById(R.id.loginButton)
@@ -88,7 +93,8 @@ class MainActivity : AppCompatActivity() {
                 url + "login?username=" + username + "&password=" + password
 
             // Try to login
-            val loginForm: Connection.Response = Jsoup.connect(url + getLoginString)
+            System.out.println("Login url: " + getLoginString)
+            val loginForm: Connection.Response = Jsoup.connect( getLoginString)
                 .followRedirects(true)
                 .method(Connection.Method.GET)
                 .timeout(10000)

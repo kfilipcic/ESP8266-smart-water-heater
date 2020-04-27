@@ -236,7 +236,7 @@ void water_heater_switcher(){
 
 void get_current_temperature(String deviceString, int num, double tempValue) {
     // return random number between 20 and 90 (representing degrees in Celsius) in JSON format
-    client.println("{'" + deviceString + "_" + String(num) + "': '" + String(tempValue) + "'}");
+    client.println("{'" + deviceString + "': '" + String(tempValue) + "'}");
 }
 
 void renderHtmlPage(char *page, WiFiClient client) {
@@ -271,20 +271,26 @@ void renderHtmlPage(char *page, WiFiClient client) {
     else if (pagestr.indexOf("entry.html") != -1) {
         client.println("<html><body></form><h1>Time: " + time + "</h1></br><h1>Date: " + date + "</h1></br></body></html>");
     }
-    else if (pagestr.indexOf("water_heater_check") != -1) {
+    else if (pagestr.indexOf("water_heater_1_check") != -1) {
         water_heater_check_state();
     }
-    else if (pagestr.indexOf("water_heater_switch") != -1) {
+    else if (pagestr.indexOf("water_heater_2_check") != -1) {
+        water_heater_check_state();
+    }
+    else if (pagestr.indexOf("water_heater_1_switch") != -1) {
         water_heater_switcher();
     }
     else if (pagestr.indexOf("updateTime") != -1) {
         updateNTPTime();
     }
     else if (pagestr.indexOf("water_heater_1_temperature") != -1) {
-        get_current_temperature("water_heater_water_temp", 1, random(2000, 9000) / 100.0); // temperature value is random and between 20 and 90 degrees Celsius
+        get_current_temperature("water_heater", 1, random(2000, 9000) / 100.0); // temperature value is random and between 20 and 90 degrees Celsius
+    }
+    else if (pagestr.indexOf("water_heater_2_temperature") != -1) {
+        get_current_temperature("water_heater", 1, random(2000, 9000) / 100.0); // temperature value is random and between 20 and 90 degrees Celsius
     }
     else if (pagestr.indexOf("water_heater_1_room_temperature") != -1) {
-        get_current_temperature("water_heater_room_temp", 1, random(1900, 2400) / 100.0);
+        get_current_temperature("water_heater", 1, random(1900, 2400) / 100.0);
     }
 
 }

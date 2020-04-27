@@ -3,6 +3,7 @@ package com.example.rijekasmarthomeapp
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import com.google.android.material.datepicker.MaterialDatePicker
 import java.util.*
@@ -17,15 +18,21 @@ class DeviceDialog : AppCompatActivity() {
         window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, factor * 500)
         this.title = this.intent.getStringExtra("title")
 
-        var startDate: TextView = findViewById(R.id.startDate)
-        var startTime: TextView = findViewById(R.id.startTime)
-        var endTime: TextView = findViewById(R.id.endTime)
+
+        val startDate: TextView = findViewById(R.id.startDate)
+        val startTime: TextView = findViewById(R.id.startTime)
+        val endTime: TextView = findViewById(R.id.endTime)
+        val cancelBtn: Button = findViewById(R.id.cancelDialogBtn)
+        val okBtn: Button = findViewById(R.id.okDialogBtn)
 
         val currentTimeWithSeconds: String = Calendar.getInstance().time.toString().split(" ")[3]
+
+        @Suppress("SpellCheckingInspection")
         val currTimeSplitted: List<String> = currentTimeWithSeconds.split(":")
+
         val currentTimeWithoutSeconds: String = currTimeSplitted[0] + ":" + currTimeSplitted[1]
         var addHour: Int = (currTimeSplitted[0].toInt() + 1)
-        if (addHour >= 24) addHour = 0;
+        if (addHour >= 24) addHour = 0
         val currentTimeWithoutSeconds1: String
         currentTimeWithoutSeconds1 = if (addHour <= 10) "0" + addHour.toString() + ":" + currTimeSplitted[1]
         else addHour.toString() + ":" + currTimeSplitted[1]
@@ -39,6 +46,11 @@ class DeviceDialog : AppCompatActivity() {
             val picker: MaterialDatePicker<*> = builder.build()
             picker.show(supportFragmentManager, picker.toString())
         }
+
+        cancelBtn.setOnClickListener {
+            onBackPressed()
+        }
+
     }
 
 

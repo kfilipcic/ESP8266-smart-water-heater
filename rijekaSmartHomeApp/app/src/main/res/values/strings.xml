@@ -22,4 +22,7 @@
     <string name="discardRulesText">Remove current rule</string>
     <string name="applyText">Apply</string>
     <string name="cancelText">Cancel</string>
+    <string name="nameText">Name: %1$s</string>
+    <string name="statusText">Status: %1$s</string>
+    <string name="tempText">Temperature: %1$s</string>
 </resources>

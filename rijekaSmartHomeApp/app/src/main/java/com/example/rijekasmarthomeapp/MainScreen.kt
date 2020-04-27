@@ -8,68 +8,62 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.example.rijekasmarthomeapp.R.string.waterHeater1
-import com.google.android.material.datepicker.MaterialDatePicker
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.android.synthetic.main.device_item.view.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.lang.Exception
 
 class MainScreen : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
+    private val timeDateUrl: String = "entry.html"
+
     private var devicesList: MutableList<Device> = mutableListOf<Device>()
+
+    private lateinit var currentDevice: WaterHeater
+
+    private var deviceName: String = "device"
+    private var checkStateUrl: String = "state"
+    private var temperatureUrl: String = "temperature"
+
+    private lateinit var state: String
+    private var temperature: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_screen)
 
-        viewManager = LinearLayoutManager(this)
-        viewAdapter = DevicesAdapter(devicesList)
-
         prepareDeviceListData()
-
-        recyclerView = findViewById<RecyclerView>(R.id.devices_list).apply {
-            setHasFixedSize(true)
-            layoutManager = viewManager
-            adapter = viewAdapter
-        }
-
-        val waterHeaterCheckUrl: String = "water_heater_check.html"
-        val waterHeaterSwitchUrl: String = "water_heater_switch.html"
-        val updateTimeUrl: String = "updateTime.html"
-        val timeDateUrl: String = "entry.html"
 
         val url: String = getString(R.string.mainUrl)
         val cookies: Map<String, String> =
             this.intent.getSerializableExtra("Map") as Map<String, String>
 
-        val toggleWaterHeaterButton: ImageButton = findViewById(R.id.toggleWaterHeaterButton)
         val timeText: TextView = findViewById(R.id.timeText)
         val dateText: TextView = findViewById(R.id.dateText)
 
 
         fun timeDate() {
             CoroutineScope(IO).launch {
-               val timeDatePage: Connection.Response = Jsoup.connect(url + timeDateUrl)
-                   .cookies(cookies)
-                   .execute()
+                val timeDatePage: Connection.Response = Jsoup.connect(url + timeDateUrl)
+                    .cookies(cookies)
+                    .execute()
 
-                val doc : Document = timeDatePage.parse()
+                val doc: Document = timeDatePage.parse()
 
-                val timeDateElements :Elements = doc.select("h1")
+                val timeDateElements: Elements = doc.select("h1")
 
-               val timeDateString = arrayListOf<String>()
+                val timeDateString = arrayListOf<String>()
 
-                timeDateElements.forEach { element :Element ->
+                timeDateElements.forEach { element: Element ->
                     timeDateString.add(element.text().toString())
                 }
 
@@ -92,9 +86,9 @@ class MainScreen : AppCompatActivity() {
 
                         println(match.groupValues.size)
 
-                        for (i: Int in  0..match.groupValues.size-1) {
+                        for (i: Int in 0..match.groupValues.size - 1) {
                             if (i > 0 && match.groupValues[i].length < 2) {
-                                when(i) {
+                                when (i) {
                                     1 -> h = "0" + h
                                     2 -> m = "0" + m
                                     3 -> s = "0" + s
@@ -108,54 +102,74 @@ class MainScreen : AppCompatActivity() {
             }
         }
 
-        fun waterHeater(waterHeaterUrl:String) {
-            CoroutineScope(IO).launch {
-                val waterHeaterPage: Connection.Response = Jsoup.connect(url + waterHeaterUrl)
-                    .cookies(cookies)
-                    .execute()
+        suspend fun getDeviceDataFromServer(device: Device) {
+            val job = CoroutineScope(IO).launch {
+                try {
 
-                val waterHeater = JSONObject(waterHeaterPage.body())
-                val waterHeaterState = waterHeater.get("water_heater").toString()
+                    if (device is WaterHeater) {
+                        val checkStateConnection =
+                            Jsoup.connect(url + checkStateUrl)
+                                .cookies(cookies)
+                                .get()
+                        val checkStatePage = JSONObject(checkStateConnection.body().text())
+                        val deviceState = checkStatePage.get(deviceName).toString()
 
-                if (waterHeaterState == "1") {
-                    toggleWaterHeaterButton.setImageResource(R.drawable.boiler_off)
-                } else {
-                    toggleWaterHeaterButton.setImageResource(R.drawable.boiler_on)
+                        when (deviceState) {
+                            "1" -> device.state = true
+                            "0" -> device.state = false
+                        }
+                    }
+
+                    if (device is WaterHeater) {
+                        val temperatureConnection =
+                            Jsoup.connect(url + temperatureUrl)
+                                .cookies(cookies)
+                                .get()
+                        val temperaturePage = JSONObject(temperatureConnection.body().text())
+
+                        device.waterTemperature = temperaturePage.get(deviceName).toString()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    println("Error while getting device data from server!")
                 }
             }
+            job.join() // Wait for a response from the server
         }
 
         timeDate()
-        // Upon starting the activity, check the water heater
-        // state for the appropriate selection of the button image
-        waterHeater(waterHeaterCheckUrl)
 
-        toggleWaterHeaterButton.setOnClickListener {
-            waterHeater(waterHeaterSwitchUrl)
-        }
 
-        /*
-        toggleWaterHeaterButton.setOnTouchListener(object: View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                when (event?.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        picker.show(supportFragmentManager, picker.toString())
-                    }
+        GlobalScope.launch(Dispatchers.Main) {
+            for ((i: Int, device: Device) in devicesList.withIndex()) {
+                if (device is WaterHeater) {
+                    deviceName = "water_heater"
+                    checkStateUrl = deviceName + "_" + (i + 1).toString() + "_" + "check" + ".html"
+                    temperatureUrl =
+                        deviceName + "_" + (i + 1).toString() + "_" + "temperature" + ".html"
+
+                    getDeviceDataFromServer(device)
+
                 }
-                return v?.onTouchEvent(event) ?: true
             }
-        })*/
+            viewManager = LinearLayoutManager(parent)
+            viewAdapter = DevicesAdapter(devicesList)
 
-
-        val intent = Intent(this, DeviceDialog::class.java)
-
-        toggleWaterHeaterButton.setOnLongClickListener (object: View.OnLongClickListener {
-            override fun onLongClick(v: View?): Boolean {
-                startActivity(intent.putExtra("title", getString(waterHeater1)))
-                return false
+            recyclerView = findViewById<RecyclerView>(R.id.devices_list).apply {
+                setHasFixedSize(true)
+                layoutManager = viewManager
+                adapter = viewAdapter
             }
-        })
+            viewManager = LinearLayoutManager(parent)
+            viewAdapter = DevicesAdapter(devicesList)
 
+            recyclerView = findViewById<RecyclerView>(R.id.devices_list).apply {
+                setHasFixedSize(true)
+                layoutManager = viewManager
+                adapter = viewAdapter
+            }
+
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -175,12 +189,10 @@ class MainScreen : AppCompatActivity() {
     }
 
     private fun prepareDeviceListData() {
-        val waterHeater: Device = Device("waterHeater1", false)//, "50.5", "20.5")
-        System.out.println(devicesList)
-        devicesList.add(waterHeater)
-        devicesList.add(waterHeater)
-        devicesList.add(waterHeater)
-        System.out.println(devicesList)
+        val waterHeaterBathroom: WaterHeater = WaterHeater("Water Heater Bathroom", false, "N/A")
+        val waterHeaterKitchen: WaterHeater = WaterHeater("Water Heater Kitchen", false, "N/A")
+        devicesList.add(waterHeaterBathroom)
+        devicesList.add(waterHeaterKitchen)
     }
 
 }

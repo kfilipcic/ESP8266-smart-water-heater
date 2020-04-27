@@ -16,7 +16,7 @@
         android:text="TextView"
         android:textColor="#000000"
         android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/button2"
+        app:layout_constraintBottom_toTopOf="@+id/removeCurrentFileDialogBtn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.369"
         app:layout_constraintStart_toEndOf="@+id/textView6" />
@@ -82,11 +82,11 @@
         android:layout_marginBottom="36dp"
         android:text="@string/toText"
         android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/button2"
+        app:layout_constraintBottom_toTopOf="@+id/removeCurrentFileDialogBtn"
         app:layout_constraintStart_toEndOf="@+id/startTime" />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/removeCurrentFileDialogBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
@@ -97,17 +97,17 @@
         app:layout_constraintTop_toBottomOf="@+id/startTime" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/okDialogBtn"
         android:layout_width="110dp"
         android:layout_height="67dp"
         android:text="@android:string/ok"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.695"
-        app:layout_constraintStart_toEndOf="@+id/button4" />
+        app:layout_constraintStart_toEndOf="@+id/cancelDialogBtn" />
 
     <Button
-        android:id="@+id/button4"
+        android:id="@+id/cancelDialogBtn"
         android:layout_width="110dp"
         android:layout_height="67dp"
         android:layout_marginStart="48dp"

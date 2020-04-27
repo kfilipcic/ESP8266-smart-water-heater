@@ -65,7 +65,7 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
-        <ImageButton
+       <!-- <ImageButton
             android:id="@+id/toggleWaterHeaterButton"
             android:layout_width="250dp"
             android:layout_height="250dp"
@@ -79,6 +79,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+        -->
 
     </LinearLayout>
 </LinearLayout>
