@@ -1,20 +1,23 @@
 package com.example.rijekasmarthomeapp
 
+import android.app.DatePickerDialog
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import com.google.android.material.datepicker.MaterialDatePicker
+import androidx.annotation.RequiresApi
 import java.util.*
 
 class DeviceDialog : AppCompatActivity() {
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_device_dialog)
 
-        val factor:Int  = this.resources.displayMetrics.density.toInt()
+        val factor: Int = this.resources.displayMetrics.density.toInt()
         window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, factor * 500)
         this.title = this.intent.getStringExtra("title")
 
@@ -34,21 +37,37 @@ class DeviceDialog : AppCompatActivity() {
         var addHour: Int = (currTimeSplitted[0].toInt() + 1)
         if (addHour >= 24) addHour = 0
         val currentTimeWithoutSeconds1: String
-        currentTimeWithoutSeconds1 = if (addHour <= 10) "0" + addHour.toString() + ":" + currTimeSplitted[1]
-        else addHour.toString() + ":" + currTimeSplitted[1]
+        currentTimeWithoutSeconds1 =
+            if (addHour <= 10) "0" + addHour.toString() + ":" + currTimeSplitted[1]
+            else addHour.toString() + ":" + currTimeSplitted[1]
 
         startTime.text = currentTimeWithoutSeconds
         endTime.text = currentTimeWithoutSeconds1
 
-
         startDate.setOnClickListener {
-            val builder: MaterialDatePicker.Builder<*> = MaterialDatePicker.Builder.datePicker()
-            val picker: MaterialDatePicker<*> = builder.build()
-            picker.show(supportFragmentManager, picker.toString())
+            // Get Current Date
+            val c: Calendar = Calendar.getInstance()
+            val year: Int = c.get(Calendar.YEAR)
+            val month: Int = c.get(Calendar.MONTH)
+            val day: Int = c.get(Calendar.DAY_OF_MONTH)
+            val datePickerDialog =
+                DatePickerDialog(this,
+                    DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
+                        val dateString: String = dayOfMonth.toString() + "." + (monthOfYear + 1) + "." + year
+                        startDate.setText(dateString)
+                    }, year, month, day
+                )
+
+            datePickerDialog.show()
         }
 
         cancelBtn.setOnClickListener {
-            onBackPressed()
+            //onBackPressed()
+            this.finish()
+        }
+
+        okBtn.setOnClickListener {
+            this.finish()
         }
 
     }

@@ -18,12 +18,14 @@
             android:name=".DeviceDialog"
             android:excludeFromRecents="true"
             android:label="Device"
-            android:theme="@style/materialCalendarTheme"></activity>
+            android:theme="@style/Theme.AppCompat.Dialog" />
         <activity
             android:name=".MainScreen"
+            android:label="Control your devices"
             android:theme="@style/Theme.AppCompat" />
         <activity
             android:name=".MainActivity"
+            android:label="Smart home app"
             android:theme="@style/Theme.AppCompat">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

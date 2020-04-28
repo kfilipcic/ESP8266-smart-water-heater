@@ -2,18 +2,23 @@ package com.example.rijekasmarthomeapp;
 
 public class Device {
     private String name;
-    private boolean state;
+    private String state;
 
-    public Device(String name, boolean state) {
+    Device(String name, String state) {
         this.name = name;
         this.state = state;
+    }
+
+    Device(String name) {
+        this.name = name;
+        this.state = "N/A";
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setState(boolean state) {
+    public void setState(String state) {
         this.state = state;
     }
 
@@ -21,7 +26,7 @@ public class Device {
         return name;
     }
 
-    public boolean getState() {
+    public String getState() {
         return state;
     }
 }
