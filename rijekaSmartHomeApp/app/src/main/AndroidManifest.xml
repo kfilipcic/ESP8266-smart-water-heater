@@ -20,6 +20,11 @@
             android:label="Device"
             android:theme="@style/Theme.AppCompat.Dialog" />
         <activity
+            android:name=".ACRemoteDialog"
+            android:excludeFromRecents="true"
+            android:label="Device"
+            android:theme="@style/Theme.AppCompat.Dialog" />
+        <activity
             android:name=".MainScreen"
             android:label="Control your devices"
             android:theme="@style/Theme.AppCompat" />

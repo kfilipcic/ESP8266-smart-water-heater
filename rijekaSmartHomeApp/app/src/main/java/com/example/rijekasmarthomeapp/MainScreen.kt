@@ -17,6 +17,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.lang.Exception
 
+@Suppress("UNCHECKED_CAST")
 class MainScreen : AppCompatActivity() , AdapterCallback {
 
     override suspend fun onMethodCallback(device: Device, url: String, cookies: Map<String, String>) {

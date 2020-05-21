@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayoutACDialog"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="316dp"
+        android:layout_height="652dp"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ac_remotee" />
+
+    <LinearLayout
+        android:layout_width="272dp"
+        android:layout_height="369dp"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="272dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView">
+
+        <LinearLayout
+            android:layout_width="59dp"
+            android:layout_height="61dp"
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentBottom="false"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/powerButtonAC"
+                android:layout_width="52dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="0dp"
+                android:layout_marginEnd="332dp"
+                android:layout_marginBottom="355dp"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/ac_remote_onoff" />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="6dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="21dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="182dp"
+                android:layout_height="match_parent"
+                android:text="  MODE"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="SHORTCUT"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="43dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/imageButton3"
+                android:layout_width="94dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton6"
+                android:layout_width="97dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn_up" />
+
+            <ImageButton
+                android:id="@+id/imageButton4"
+                android:layout_width="80dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="19dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="102dp"
+                android:layout_height="match_parent"
+                android:text=" SWING"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="63dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="TEMP"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView5"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="FAN"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/imageButton7"
+                android:layout_width="94dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton9"
+                android:layout_width="97dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn_down" />
+
+            <ImageButton
+                android:id="@+id/imageButton8"
+                android:layout_width="80dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView13"
+                android:layout_width="92dp"
+                android:layout_height="match_parent"
+                android:text=" DIRECT"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView14"
+                android:layout_width="116dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="TIMER ON"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView15"
+                android:layout_width="107dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="TIMER OFF"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/imageButton16"
+                android:layout_width="94dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton17"
+                android:layout_width="97dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton18"
+                android:layout_width="80dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="22dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView9"
+                android:layout_width="101dp"
+                android:layout_height="match_parent"
+                android:text=" SLEEP"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView10"
+                android:layout_width="115dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="TURBO"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/textView11"
+                android:layout_width="75dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="LED"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/imageButton10"
+                android:layout_width="94dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton11"
+                android:layout_width="97dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+
+            <ImageButton
+                android:id="@+id/imageButton12"
+                android:layout_width="80dp"
+                android:layout_height="42dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitStart"
+                app:srcCompat="@drawable/ac_remote_btn" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

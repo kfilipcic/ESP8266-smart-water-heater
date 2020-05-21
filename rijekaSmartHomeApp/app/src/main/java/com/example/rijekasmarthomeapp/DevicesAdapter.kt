@@ -10,6 +10,7 @@ import kotlinx.android.synthetic.main.device_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import org.jsoup.Jsoup
+import java.io.Serializable
 import java.lang.ClassCastException
 import java.lang.Exception
 
@@ -34,11 +35,17 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
         val deviceView = LayoutInflater.from(parent.context)
             .inflate(R.layout.device_item, parent, false)
 
+
         val holder = MyViewHolder(deviceView)
         val intent = Intent(deviceView.context, DeviceDialog::class.java)
+            .putExtra("cookies", cookies as Serializable)
+        val acRemoteIntent = Intent(deviceView.context, ACRemoteDialog::class.java)
 
         deviceView.setOnClickListener {
-            deviceView.context.startActivity(intent.putExtra("title", devicesList[holder.adapterPosition].name))
+            if (devicesList[holder.adapterPosition] is AirConditioner)
+                deviceView.context.startActivity(acRemoteIntent.putExtra("title", devicesList[holder.adapterPosition].name))
+            else
+                deviceView.context.startActivity(intent.putExtra("title", devicesList[holder.adapterPosition].name))
         }
 
         holder.deviceView.deviceImageBtn.setOnClickListener{
@@ -47,9 +54,7 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
                     Jsoup.connect(url + "water_heater_1_switch.html")
                         .cookies(cookies)
                         .get()
-                    println(url)
                     withContext(Dispatchers.Main) {
-                        println("btj")
                         try {
                             adapterCallback.onMethodCallback(devicesList[holder.adapterPosition], url, cookies)
                             notifyDataSetChanged()

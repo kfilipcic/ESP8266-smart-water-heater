@@ -9,7 +9,7 @@
     <string name="timeText">N/A</string>
     <string name="dateText">N/A</string>
     <string name="waterHeaterButtonDescription">Switches the water heater on and off</string>
-    <string name="currentTimeString">Server time:</string>
+    <string name="currentTimeString">Server date/time:</string>
     <string name="rememberPasswordText">Remember password</string>
     <string name="refreshActivity">Refresh</string>
     <string name="waterHeater1">Water heater 1</string>
@@ -25,4 +25,7 @@
     <string name="nameText">Name: %1$s</string>
     <string name="statusText">Status: %1$s</string>
     <string name="tempText">Temperature: %1$s</string>
+    <string name="checkBoxText">Define temperature range</string>
+    <string name="minTempText">Min. temperature (°C):</string>
+    <string name="maxTempText">Max. temperature (°C):</string>
 </resources>
