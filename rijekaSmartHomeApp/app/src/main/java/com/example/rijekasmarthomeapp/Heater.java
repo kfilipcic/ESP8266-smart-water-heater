@@ -3,6 +3,7 @@ package com.example.rijekasmarthomeapp;
 public class Heater extends Device {
     private String roomTemperature;
     private String moisture;
+    private boolean tempNotifs;
 
     public Heater(String name, String state, String roomTemperature, String moisture) {
         super(name, state);
@@ -30,5 +31,13 @@ public class Heater extends Device {
 
     public String getMoisture() {
         return moisture;
+    }
+
+    public void setTempNotifs(boolean tempNotifs) {
+        this.tempNotifs = tempNotifs;
+    }
+
+    public boolean getTempNotifs() {
+        return tempNotifs;
     }
 }

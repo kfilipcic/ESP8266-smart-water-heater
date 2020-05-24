@@ -21,6 +21,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
@@ -41,4 +44,10 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.0-alpha06'
     // Recycler view support
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
+
+    implementation "androidx.work:work-runtime:2.3.4"
+    // Kotlin + coroutines
+    implementation "androidx.work:work-runtime-ktx:2.3.4"
+
+    implementation 'com.google.code.gson:gson:2.8.6'
 }

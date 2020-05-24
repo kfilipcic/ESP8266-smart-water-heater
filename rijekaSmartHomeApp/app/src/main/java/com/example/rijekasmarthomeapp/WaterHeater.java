@@ -2,6 +2,7 @@ package com.example.rijekasmarthomeapp;
 
 public class WaterHeater extends Device {
     private String waterTemperature;
+    private boolean tempNotifs;
 
     public WaterHeater (String name, String state, String waterTemperature) {
         super(name, state);
@@ -19,5 +20,13 @@ public class WaterHeater extends Device {
 
     public void setWaterTemperature(String waterTemperature) {
         this.waterTemperature = waterTemperature;
+    }
+
+    public void setTempNotifs(boolean tempNotifs) {
+        this.tempNotifs = tempNotifs;
+    }
+
+    public boolean getTempNotifs() {
+        return tempNotifs;
     }
 }

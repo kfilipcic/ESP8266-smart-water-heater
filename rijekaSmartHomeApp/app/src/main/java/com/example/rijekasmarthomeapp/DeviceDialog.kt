@@ -1,33 +1,52 @@
 package com.example.rijekasmarthomeapp
 
+import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import java.io.Serializable
+import java.lang.reflect.Type
 import java.util.*
 import kotlin.collections.ArrayList
 
 class DeviceDialog : AppCompatActivity() {
+    private lateinit var devicesListPreferences: SharedPreferences
+    private lateinit var editor: SharedPreferences.Editor
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_device_dialog)
 
+        devicesListPreferences = applicationContext.getSharedPreferences("devicesList", 0)
+        editor = devicesListPreferences.edit()
+
         val url: String = getString(R.string.mainUrl)
         val cookies: Map<String, String> = this.intent.getSerializableExtra("cookies") as Map<String, String>
+        val position: Int = this.intent.getIntExtra("position", -1)
+        val devicesList : MutableList<Device> = getDevicesList()
+        val device: Device = devicesList[position]
 
         var startTimeDate = ""
         var startTimeMs = ""
@@ -37,8 +56,8 @@ class DeviceDialog : AppCompatActivity() {
             "rule?starttimems=$startTimeDate&starttime=$startTimeMs&endtime=$endTimeMs"
 
         val factor: Int = this.resources.displayMetrics.density.toInt()
-        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, factor * 600)
-        this.title = this.intent.getStringExtra("title")
+        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, factor * 700)
+        this.title = device.name
 
 
         val startDate: TextView = findViewById(R.id.startDate)
@@ -50,12 +69,14 @@ class DeviceDialog : AppCompatActivity() {
         val tempMaxTV: TextView = findViewById(R.id.maxTempTV)
         val tempMinET: EditText = findViewById(R.id.minTempET)
         val tempMaxET: EditText = findViewById(R.id.maxTempET)
+        val temp2CheckBox: CheckBox = findViewById(R.id.checkBox2)
         val tempViews: ArrayList<View> = ArrayList()
 
         tempViews.add(tempMinTV)
         tempViews.add(tempMinET)
         tempViews.add(tempMaxTV)
         tempViews.add(tempMaxET)
+        tempViews.add(temp2CheckBox)
 
         val removeRule: Button = findViewById(R.id.removeCurrentFileDialogBtn)
         val cancelBtn: Button = findViewById(R.id.cancelDialogBtn)
@@ -161,6 +182,34 @@ class DeviceDialog : AppCompatActivity() {
             for (v: View in tempViews) {
                 v.isEnabled = !v.isEnabled
             }
+            if (device is WaterHeater) {
+                device.tempNotifs = true
+                devicesList[position] = device
+                setDevicesList("devicesList", devicesList)
+
+                val notificationDetails: ArrayList<String> = arrayListOf("Temperature not in range!", device.name + " is currently at " + device.waterTemperature.toString() + "°C")
+
+                val broadcastIntent = Intent(this, CheckTemperatureAlarmReceiver::class.java)
+                broadcastIntent.putStringArrayListExtra("notif", notificationDetails)
+                broadcastIntent.putExtra("cookies", cookies as Serializable)
+
+                val alarmManager =
+                    applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                val pendingIntent =
+                    PendingIntent.getBroadcast(this, 0, broadcastIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                if (pendingIntent != null && alarmManager != null) {
+                    alarmManager.cancel(pendingIntent)
+                }
+
+                alarmManager?.setExact(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    SystemClock.elapsedRealtime(),
+                    pendingIntent
+                )
+
+
+            }
+
         }
 
         cancelBtn.setOnClickListener {
@@ -194,6 +243,43 @@ class DeviceDialog : AppCompatActivity() {
             this.finish()
         }
 
+    }
+    fun getDevicesList(): MutableList<Device> {
+        var arrayItems: MutableList<Device> = mutableListOf()
+        val serializedObject: String? =
+            devicesListPreferences.getString("devicesList", null)
+        if (serializedObject != null) {
+            var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+                RuntimeTypeAdapterFactory
+                    .of(Device::class.java)
+                    .registerSubtype(WaterHeater::class.java )
+                    .registerSubtype(Heater::class.java)
+                    .registerSubtype(AirConditioner::class.java)
+                        as RuntimeTypeAdapterFactory<Device>).create()
+            val type: Type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+            arrayItems = gson.fromJson(serializedObject, type)
+        }
+        return arrayItems
+    }
+
+
+    fun setDevicesList(key: String, list: MutableList<Device>) {
+        var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+            RuntimeTypeAdapterFactory
+                .of(Device::class.java)
+                .registerSubtype(WaterHeater::class.java )
+                .registerSubtype(Heater::class.java)
+                .registerSubtype(AirConditioner::class.java)
+                    as RuntimeTypeAdapterFactory<Device>).create()
+        val type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+        val json: String = gson.toJson(list, type)
+
+        set(key, json)
+    }
+
+    fun set(key: String, value: String) {
+        editor.putString(key, value)
+        editor.commit()
     }
 
 

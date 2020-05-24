@@ -2,10 +2,14 @@ package com.example.rijekasmarthomeapp
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.device_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -13,10 +17,14 @@ import org.jsoup.Jsoup
 import java.io.Serializable
 import java.lang.ClassCastException
 import java.lang.Exception
+import java.lang.reflect.Type
 
-class DevicesAdapter(context: Context, private val devicesList: MutableList<Device>, private val cookies: Map<String, String>, private val url: String) :
+class DevicesAdapter(private var context: Context, private val cookies: Map<String, String>, private val url: String) :
 
     RecyclerView.Adapter<DevicesAdapter.MyViewHolder>() {
+
+    private lateinit var devicesListPreferences: SharedPreferences
+    private lateinit var editor: SharedPreferences.Editor
 
     private val adapterCallback:AdapterCallback
     init{
@@ -32,6 +40,7 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
     class MyViewHolder(val deviceView: View) : RecyclerView.ViewHolder(deviceView)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
+
         val deviceView = LayoutInflater.from(parent.context)
             .inflate(R.layout.device_item, parent, false)
 
@@ -42,10 +51,12 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
         val acRemoteIntent = Intent(deviceView.context, ACRemoteDialog::class.java)
 
         deviceView.setOnClickListener {
-            if (devicesList[holder.adapterPosition] is AirConditioner)
-                deviceView.context.startActivity(acRemoteIntent.putExtra("title", devicesList[holder.adapterPosition].name))
+            if (getDevicesList()[holder.adapterPosition] is AirConditioner)
+                deviceView.context.startActivity(acRemoteIntent.putExtra("title", getDevicesList()[holder.adapterPosition].name)
+                    .putExtra("position", holder.adapterPosition))
             else
-                deviceView.context.startActivity(intent.putExtra("title", devicesList[holder.adapterPosition].name))
+                deviceView.context.startActivity(intent
+                    .putExtra("position", holder.adapterPosition))
         }
 
         holder.deviceView.deviceImageBtn.setOnClickListener{
@@ -56,7 +67,7 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
                         .get()
                     withContext(Dispatchers.Main) {
                         try {
-                            adapterCallback.onMethodCallback(devicesList[holder.adapterPosition], url, cookies)
+                            adapterCallback.onMethodCallback(getDevicesList()[holder.adapterPosition], url, cookies)
                             notifyDataSetChanged()
                             deviceView.invalidate()
                         } catch (e: ClassCastException) {
@@ -74,9 +85,12 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val device: Device = devicesList[position]
+        val device: Device = getDevicesList()[position]
 
         holder.deviceView.deviceNameTV.text = device.name
+
+        println(device.state)
+        if(device is WaterHeater) println("Omg" + device.waterTemperature)
 
         when (device) {
             is WaterHeater -> {
@@ -112,9 +126,53 @@ class DevicesAdapter(context: Context, private val devicesList: MutableList<Devi
         holder.deviceView.deviceNameTV.text = device.name
     }
 
-    override fun getItemCount() = devicesList.size
+    override fun getItemCount(): Int  {
+        devicesListPreferences = context.getSharedPreferences("devicesList", 0)
+        editor = devicesListPreferences.edit()
+        return getDevicesList().size
+    }
+
+    fun getDevicesList(): MutableList<Device> {
+        var arrayItems: MutableList<Device> = mutableListOf()
+        val serializedObject: String? =
+            devicesListPreferences.getString("devicesList", null)
+        if (serializedObject != null) {
+            var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+                RuntimeTypeAdapterFactory
+                    .of(Device::class.java)
+                    .registerSubtype(WaterHeater::class.java )
+                    .registerSubtype(Heater::class.java)
+                    .registerSubtype(AirConditioner::class.java)
+                        as RuntimeTypeAdapterFactory<Device>).create()
+            val type: Type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+            arrayItems = gson.fromJson(serializedObject, type)
+        }
+        return arrayItems
+    }
+
+
+    fun setDevicesList(key: String, list: MutableList<Device>) {
+        var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+            RuntimeTypeAdapterFactory
+                .of(Device::class.java)
+                .registerSubtype(WaterHeater::class.java )
+                .registerSubtype(Heater::class.java)
+                .registerSubtype(AirConditioner::class.java)
+                    as RuntimeTypeAdapterFactory<Device>).create()
+        val type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+        val json: String = gson.toJson(list, type)
+
+        set(key, json)
+    }
+
+    fun set(key: String, value: String) {
+        editor.putString(key, value)
+        editor.commit()
+    }
+
 }
 
 interface AdapterCallback {
     suspend fun onMethodCallback(device: Device, url: String, cookies: Map<String, String>)
 }
+
