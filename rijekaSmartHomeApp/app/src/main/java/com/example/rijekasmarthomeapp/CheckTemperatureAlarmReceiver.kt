@@ -35,28 +35,29 @@ class CheckTemperatureAlarmReceiver : BroadcastReceiver() {
 
         try {
             GlobalScope.launch(IO) {
-                var waterHeaterCount = 0
-                var heaterCount = 0
-                var acCount = 0
                 var type = ""
+                var minTemp: Double = 0.0
+                var maxTemp: Double = 0.0
 
                 for (device: Device in devicesList) {
                     when (device) {
                         is WaterHeater -> {
                             type = "water_heater"
-                            waterHeaterCount++
+                            minTemp = device.minTemp
+                            maxTemp = device.maxTemp
                         }
                         is Heater -> {
                             type = "heater"
-                            heaterCount++
+                            minTemp = device.minTemp
+                            maxTemp = device.maxTemp
                         }
                         is AirConditioner -> {
                             type = "ac"
-                            acCount++
+                            minTemp = device.minTemp
+                            maxTemp = device.maxTemp
                         }
                     }
-                    val tempUrl = baseUrl + type + "_" + waterHeaterCount.toString() + "_" + "temperature.html"
-                    println("url of tmep nez " +tempUrl )
+                    val tempUrl = baseUrl + type + "_" + device.id_num.toString() + "_" + "temperature.html"
                     val temperatureHTML =
                         Jsoup.connect(tempUrl)
                             .cookies(cookies)
@@ -65,7 +66,11 @@ class CheckTemperatureAlarmReceiver : BroadcastReceiver() {
                     val currentTemp: Double =
                         temperaturePage.get(type).toString().toDouble()
 
-                    if (currentTemp > 10) {
+                    if (currentTemp < minTemp || currentTemp > maxTemp) {
+
+                        println("minTemp: " + minTemp)
+                        println("maxTemp: " + maxTemp)
+                        println("currentTemp" + currentTemp)
 
                         val cookies: MutableMap<String, String> = mutableMapOf<String, String>()
 
@@ -77,7 +82,7 @@ class CheckTemperatureAlarmReceiver : BroadcastReceiver() {
                             notificationDetails[0],
                             notificationDetails[1]
                         ).build()
-                        notificationUtils.getManager().notify(150, notification)
+                        notificationUtils.getManager().notify(device.id_num, notification)
                     }
                 }
             }

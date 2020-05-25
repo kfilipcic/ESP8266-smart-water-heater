@@ -14,8 +14,8 @@ import androidx.core.app.NotificationCompat
 
 class  NotificationUtils(base: Context) : ContextWrapper(base) {
 
-    val MYCHANNEL_ID = "App Alert Notification ID"
-    val MYCHANNEL_NAME = "App Alert Notification"
+    val MYCHANNEL_ID = "temperature_notifications_1"
+    val MYCHANNEL_NAME = "Temperature alerts notifications channel"
 
     private var manager: NotificationManager? = null
 
@@ -31,7 +31,7 @@ class  NotificationUtils(base: Context) : ContextWrapper(base) {
         val channel = NotificationChannel(MYCHANNEL_ID, MYCHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
         channel.enableVibration(true)
 
-        getManager().createNotificationChannel(channel)
+        //getManager().createNotificationChannel(channel)
     }
 
     // Get Manager

@@ -1,12 +1,7 @@
 package com.example.rijekasmarthomeapp
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.SystemClock
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -16,7 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,57 +23,15 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.io.Serializable
 import java.lang.reflect.Type
 
 @Suppress("UNCHECKED_CAST")
 class MainScreen : AppCompatActivity(), AdapterCallback {
-    private val requestId = 1
-
     override suspend fun onMethodCallback(
         device: Device,
         url: String,
         cookies: Map<String, String>
     ) {
-        getDeviceDataFromServer(device, url, cookies)
-    }
-
-    private suspend fun getDeviceDataFromServer(
-        device: Device,
-        url: String,
-        cookies: Map<String, String>
-    ) {
-        val job = CoroutineScope(IO).launch {
-            try {
-
-                if (device is WaterHeater) {
-                    val checkStateConnection =
-                        Jsoup.connect(url + checkStateUrl)
-                            .cookies(cookies)
-                            .get()
-                    val checkStatePage = JSONObject(checkStateConnection.body().text())
-
-                    when (checkStatePage.get(deviceName).toString()) {
-                        "0" -> device.state = "ON" // Yes, zero is for ON
-                        "1" -> device.state = "OFF"
-                    }
-                }
-
-                if (device is WaterHeater) {
-                    val temperatureConnection =
-                        Jsoup.connect(url + temperatureUrl)
-                            .cookies(cookies)
-                            .get()
-                    val temperaturePage = JSONObject(temperatureConnection.body().text())
-
-                    device.waterTemperature = temperaturePage.get(deviceName).toString()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                println("Error while getting device data from server!")
-            }
-        }
-        job.join() // Wait for a response from the server
     }
 
     private lateinit var recyclerView: RecyclerView
@@ -90,9 +42,7 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
 
     private var devicesList: MutableList<Device> = mutableListOf()
 
-    private var deviceName: String = "device"
-    private var checkStateUrl: String = "state"
-    private var temperatureUrl: String = "temperature"
+    private var deviceName: String = "default"
 
     private lateinit var devicesListPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
@@ -104,7 +54,7 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
         devicesListPreferences = applicationContext.getSharedPreferences("devicesList", 0)
         editor = devicesListPreferences.edit()
 
-        prepareDeviceListData()
+        if (getDevicesList().size < 1) prepareDeviceListData()
 
         val url: String = getString(R.string.mainUrl)
         val cookies: Map<String, String> =
@@ -116,11 +66,10 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
 
         fun timeDate() {
             CoroutineScope(IO).launch {
-                val timeDatePage: Connection.Response = Jsoup.connect(url + timeDateUrl)
+                val doc: Document = Jsoup.connect(url + timeDateUrl)
                     .cookies(cookies)
-                    .execute()
-
-                val doc: Document = timeDatePage.parse()
+                    .timeout(60000)
+                    .get()
 
                 val timeDateElements: Elements = doc.select("h1")
 
@@ -171,53 +120,13 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
         viewAdapter = DevicesAdapter(this, cookies, url)
 
         GlobalScope.launch(Dispatchers.Main) {
-            var devices : MutableList<Device> = getDevicesList()
-            for ((i: Int, device: Device) in devices.withIndex()) {
-                if (device is WaterHeater) {
-                    deviceName = "water_heater"
-                    checkStateUrl = deviceName + "_" + (i + 1).toString() + "_" + "check" + ".html"
-                    temperatureUrl =
-                        deviceName + "_" + (i + 1).toString() + "_" + "temperature" + ".html"
-
-                    getDeviceDataFromServer(device, url, cookies)
-
-                }
-            }
-
-            setDevicesList("devicesList", devices)
-
             viewManager = LinearLayoutManager(parent)
-
             recyclerView = findViewById<RecyclerView>(R.id.devices_list).apply {
                 setHasFixedSize(true)
                 layoutManager = viewManager
                 adapter = viewAdapter
             }
-
         }
-
-        // Thinking of putting alarmManager in DevicesDialog...
-        /*
-        val notificationDetails: ArrayList<String> = arrayListOf("piyda", "ti materina")
-
-        val broadcastIntent = Intent(this, CheckTemperatureAlarmReceiver::class.java)
-        broadcastIntent.putStringArrayListExtra("notif", notificationDetails)
-        broadcastIntent.putExtra("cookies", cookies as Serializable)
-
-        val alarmManager =
-            applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-        val pendingIntent =
-            PendingIntent.getBroadcast(this, 0, broadcastIntent, PendingIntent.FLAG_UPDATE_CURRENT)
-        if (pendingIntent != null && alarmManager != null) {
-            alarmManager.cancel(pendingIntent)
-        }
-
-        alarmManager?.setInexactRepeating(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_HALF_HOUR,
-            AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-            pendingIntent
-        )*/
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -237,14 +146,14 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
     }
 
     private fun prepareDeviceListData() {
-        val waterHeaterBathroom = WaterHeater("Water Heater Bathroom", "OFF", "N/A")
-        val waterHeaterKitchen = WaterHeater("Water Heater Kitchen", "OFF", "N/A")
+        val waterHeaterBathroom = WaterHeater("Water Heater Bathroom", "OFF", "N/A", 1)
+        val waterHeaterKitchen = WaterHeater("Water Heater Kitchen", "OFF", "N/A", 2)
 
         devicesList.add(waterHeaterBathroom)
         devicesList.add(waterHeaterKitchen)
-        devicesList.add(Heater("Kitchen heater"))
-        devicesList.add(AirConditioner("Living room AC"))
-        devicesList.add(AirConditioner("Main hall AC"))
+        devicesList.add(Heater("Kitchen heater", 1))
+        devicesList.add(AirConditioner("Living room AC", 1))
+        devicesList.add(AirConditioner("Main hall AC", 2))
 
         setDevicesList("devicesList", devicesList)
     }
@@ -254,14 +163,16 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
         val serializedObject: String? =
             devicesListPreferences.getString("devicesList", null)
         if (serializedObject != null) {
-            var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+            var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
                 RuntimeTypeAdapterFactory
                     .of(Device::class.java)
-                    .registerSubtype(WaterHeater::class.java )
+                    .registerSubtype(WaterHeater::class.java)
                     .registerSubtype(Heater::class.java)
                     .registerSubtype(AirConditioner::class.java)
-                        as RuntimeTypeAdapterFactory<Device>).create()
-            val type: Type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+                        as RuntimeTypeAdapterFactory<Device>
+            ).create()
+            val type: Type =
+                TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
             arrayItems = gson.fromJson(serializedObject, type)
         }
         return arrayItems
@@ -269,13 +180,14 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
 
 
     fun setDevicesList(key: String, list: MutableList<Device>) {
-        var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+        var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
             RuntimeTypeAdapterFactory
-            .of(Device::class.java)
-            .registerSubtype(WaterHeater::class.java )
-            .registerSubtype(Heater::class.java)
-            .registerSubtype(AirConditioner::class.java)
-                as RuntimeTypeAdapterFactory<Device>).create()
+                .of(Device::class.java)
+                .registerSubtype(WaterHeater::class.java)
+                .registerSubtype(Heater::class.java)
+                .registerSubtype(AirConditioner::class.java)
+                    as RuntimeTypeAdapterFactory<Device>
+        ).create()
         val type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
         val json: String = gson.toJson(list, type)
 

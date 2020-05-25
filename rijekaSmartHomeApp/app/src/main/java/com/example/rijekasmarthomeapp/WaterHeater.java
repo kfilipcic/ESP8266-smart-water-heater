@@ -1,25 +1,28 @@
 package com.example.rijekasmarthomeapp;
 
 public class WaterHeater extends Device {
-    private String waterTemperature;
+    private String temperature;
     private boolean tempNotifs;
+    private boolean autoRegulateTemperature;
+    private double minTemp = -500.0;
+    private double maxTemp = 500.0;
 
-    public WaterHeater (String name, String state, String waterTemperature) {
-        super(name, state);
-        this.waterTemperature = waterTemperature;
+    public WaterHeater (String name, String state, String temperature, int id_num) {
+        super(name, state, id_num);
+        this.temperature = temperature;
     }
 
-    public WaterHeater (String name) {
-        super(name);
-        this.waterTemperature = "N/A";
+    public WaterHeater (String name, int id_num) {
+        super(name, id_num);
+        this.temperature = "N/A";
     }
 
-    public String getWaterTemperature() {
-        return waterTemperature;
+    public String getTemperature() {
+        return temperature;
     }
 
-    public void setWaterTemperature(String waterTemperature) {
-        this.waterTemperature = waterTemperature;
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
     }
 
     public void setTempNotifs(boolean tempNotifs) {
@@ -28,5 +31,21 @@ public class WaterHeater extends Device {
 
     public boolean getTempNotifs() {
         return tempNotifs;
+    }
+
+    public double getMinTemp() {
+        return minTemp;
+    }
+
+    public double getMaxTemp() {
+        return maxTemp;
+    }
+
+    public void setMinTemp(double minTemp) {
+        this.minTemp = minTemp;
+    }
+
+    public void setMaxTemp(double maxTemp) {
+        this.maxTemp = maxTemp;
     }
 }

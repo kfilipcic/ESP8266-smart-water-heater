@@ -1,28 +1,31 @@
 package com.example.rijekasmarthomeapp;
 
 public class Heater extends Device {
-    private String roomTemperature;
+    private String temperature;
     private String moisture;
     private boolean tempNotifs;
+    private boolean autoRegulateTemperature;
+    private double minTemp = -500.0;
+    private double maxTemp = 500.0;
 
-    public Heater(String name, String state, String roomTemperature, String moisture) {
-        super(name, state);
-        this.roomTemperature = roomTemperature;
+    public Heater(String name, String state, String temperature, String moisture, int id_num) {
+        super(name, state, id_num);
+        this.temperature = temperature;
         this.moisture = moisture;
     }
 
-    public Heater(String name) {
-        super(name);
-        this.roomTemperature = "N/A";
+    public Heater(String name, int id_num) {
+        super(name, id_num);
+        this.temperature = "N/A";
         this.moisture = "N/A";
     }
 
-    public void setRoomTemperature(String roomTemperature) {
-        this.roomTemperature = roomTemperature;
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
     }
 
-    public String getRoomTemperature() {
-        return roomTemperature;
+    public String getTemperature() {
+        return temperature;
     }
 
     public void setMoisture(String moisture) {
@@ -39,5 +42,21 @@ public class Heater extends Device {
 
     public boolean getTempNotifs() {
         return tempNotifs;
+    }
+
+    public double getMinTemp() {
+        return minTemp;
+    }
+
+    public double getMaxTemp() {
+        return maxTemp;
+    }
+
+    public void setMinTemp(double minTemp) {
+        this.minTemp = minTemp;
+    }
+
+    public void setMaxTemp(double maxTemp) {
+        this.maxTemp = maxTemp;
     }
 }

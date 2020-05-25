@@ -19,16 +19,17 @@ import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.android.synthetic.main.activity_device_dialog.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.io.Serializable
 import java.lang.reflect.Type
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.floor
+import kotlin.math.round
 
 class DeviceDialog : AppCompatActivity() {
     private lateinit var devicesListPreferences: SharedPreferences
@@ -43,9 +44,10 @@ class DeviceDialog : AppCompatActivity() {
         editor = devicesListPreferences.edit()
 
         val url: String = getString(R.string.mainUrl)
-        val cookies: Map<String, String> = this.intent.getSerializableExtra("cookies") as Map<String, String>
+        val cookies: Map<String, String> =
+            this.intent.getSerializableExtra("cookies") as Map<String, String>
         val position: Int = this.intent.getIntExtra("position", -1)
-        val devicesList : MutableList<Device> = getDevicesList()
+        val devicesList: MutableList<Device> = getDevicesList()
         val device: Device = devicesList[position]
 
         var startTimeDate = ""
@@ -111,6 +113,15 @@ class DeviceDialog : AppCompatActivity() {
 
         startTime.text = currentTimeWithoutSeconds
         endTime.text = currentTimeWithoutSeconds1
+
+        if (device.startDate > -1 && device.startTimeHHmm > -1 && device.endTimeHHmm > -1) {
+            val c: Calendar = Calendar.getInstance()
+            c.timeInMillis = device.startDate
+            startDate.text = SimpleDateFormat("dd.MM.yyyy")
+                .format(c.time)
+            startTime.text = fixTimeFormat((floor(device.startTimeHHmm / 3600000.0)).toInt().toString(), (((device.startTimeHHmm - (floor(device.startTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt().toString())
+            endTime.text = fixTimeFormat((floor(device.endTimeHHmm / 3600000.0)).toInt().toString(), (((device.endTimeHHmm - (floor(device.endTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt().toString())
+        }
 
         startDate.setOnClickListener {
             // Get Current Date
@@ -182,34 +193,6 @@ class DeviceDialog : AppCompatActivity() {
             for (v: View in tempViews) {
                 v.isEnabled = !v.isEnabled
             }
-            if (device is WaterHeater) {
-                device.tempNotifs = true
-                devicesList[position] = device
-                setDevicesList("devicesList", devicesList)
-
-                val notificationDetails: ArrayList<String> = arrayListOf("Temperature not in range!", device.name + " is currently at " + device.waterTemperature.toString() + "°C")
-
-                val broadcastIntent = Intent(this, CheckTemperatureAlarmReceiver::class.java)
-                broadcastIntent.putStringArrayListExtra("notif", notificationDetails)
-                broadcastIntent.putExtra("cookies", cookies as Serializable)
-
-                val alarmManager =
-                    applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-                val pendingIntent =
-                    PendingIntent.getBroadcast(this, 0, broadcastIntent, PendingIntent.FLAG_UPDATE_CURRENT)
-                if (pendingIntent != null && alarmManager != null) {
-                    alarmManager.cancel(pendingIntent)
-                }
-
-                alarmManager?.setExact(
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    SystemClock.elapsedRealtime(),
-                    pendingIntent
-                )
-
-
-            }
-
         }
 
         cancelBtn.setOnClickListener {
@@ -219,11 +202,21 @@ class DeviceDialog : AppCompatActivity() {
 
         okBtn.setOnClickListener {
             val calendar: Calendar = Calendar.getInstance()
+            println("1: " + startDate.text)
             val date: List<String> = startDate.text.split(".")
+            for (j in 0..2) {
+                println("date:" + date[j])
+            }
             val time: List<String> = startTime.text.split(":")
-            calendar.set(date[2].toInt(), date[1].toInt(), date[0].toInt(), time[0].toInt(), time[1].toInt())
+            calendar.set(
+                date[2].toInt(),
+                date[1].toInt(),
+                date[0].toInt(),
+                time[0].toInt(),
+                time[1].toInt()
+            )
+            calendar.add(Calendar.MONTH, -1) // For some odd reason, it is adding +1 month to the date after the previous line
             startTimeDate = calendar.timeInMillis.toString()
-
 
             val endtime: List<String> = endTime.text.split(":")
             startTimeMs = (time[0].toInt() * 3600000 + time[1].toInt() * 60000).toString()
@@ -232,31 +225,109 @@ class DeviceDialog : AppCompatActivity() {
             ruleUrlRequestString =
                 "rule?starttimems=$startTimeDate&starttime=$startTimeMs&endtime=$endTimeMs"
 
-            println(ruleUrlRequestString)
-
             GlobalScope.launch(IO) {
                 Jsoup.connect(url + ruleUrlRequestString)
                     .cookies(cookies)
                     .get()
             }
 
+            devicesList[position].startDate = startTimeDate.toLong()
+            devicesList[position].startTimeHHmm = startTimeMs.toLong()
+            devicesList[position].endTimeHHmm = endTimeMs.toLong()
+
+
+            if (tempCheckBox.isChecked) {
+                when (device) {
+                    is WaterHeater -> {
+                        device.minTemp = minTempET.text.toString().toDouble()
+                        device.maxTemp = maxTempET.text.toString().toDouble()
+                    }
+                    is Heater -> {
+                        device.minTemp = minTempET.text.toString().toDouble()
+                        device.maxTemp = maxTempET.text.toString().toDouble()
+                    }
+                    is AirConditioner -> {
+                        device.minTemp = minTempET.text.toString().toDouble()
+                        device.maxTemp = maxTempET.text.toString().toDouble()
+                    }
+                }
+
+                var notificationDetails: ArrayList<String> = arrayListOf()
+                when (device) {
+                    is WaterHeater -> {
+                        device.tempNotifs = true
+                        devicesList[position] = device
+                        setDevicesList("devicesList", devicesList)
+                        notificationDetails = arrayListOf(
+                            "Temperature not in range!",
+                            device.name + " is currently at " + device.temperature.toString() + "°C"
+                        )
+                    }
+                    is Heater -> {
+                        device.tempNotifs = true
+                        devicesList[position] = device
+                        setDevicesList("devicesList", devicesList)
+                        notificationDetails = arrayListOf(
+                            "Temperature not in range!",
+                            device.name + " is currently at " + device.temperature.toString() + "°C"
+                        )
+                    }
+                    is AirConditioner -> {
+                        device.tempNotifs = true
+                        devicesList[position] = device
+                        setDevicesList("devicesList", devicesList)
+                        notificationDetails = arrayListOf(
+                            "Temperature not in range!",
+                            device.name + " is currently at " + device.temperature.toString() + "°C"
+                        )
+                    }
+                }
+
+                val broadcastIntent = Intent(this, CheckTemperatureAlarmReceiver::class.java)
+                broadcastIntent.putStringArrayListExtra("notif", notificationDetails)
+                broadcastIntent.putExtra("cookies", cookies as Serializable)
+
+                val alarmManager =
+                    applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                val pendingIntent =
+                    PendingIntent.getBroadcast(
+                        this,
+                        0,
+                        broadcastIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                if (pendingIntent != null && alarmManager != null) {
+                    alarmManager.cancel(pendingIntent)
+                }
+
+                alarmManager?.setExact(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    SystemClock.elapsedRealtime(),
+                    pendingIntent
+                )
+            }
+
+            setDevicesList("devicesList", devicesList)
             this.finish()
         }
 
     }
+
     fun getDevicesList(): MutableList<Device> {
         var arrayItems: MutableList<Device> = mutableListOf()
         val serializedObject: String? =
             devicesListPreferences.getString("devicesList", null)
         if (serializedObject != null) {
-            var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+            var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
                 RuntimeTypeAdapterFactory
                     .of(Device::class.java)
-                    .registerSubtype(WaterHeater::class.java )
+                    .registerSubtype(WaterHeater::class.java)
                     .registerSubtype(Heater::class.java)
                     .registerSubtype(AirConditioner::class.java)
-                        as RuntimeTypeAdapterFactory<Device>).create()
-            val type: Type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+                        as RuntimeTypeAdapterFactory<Device>
+            ).create()
+            val type: Type =
+                TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
             arrayItems = gson.fromJson(serializedObject, type)
         }
         return arrayItems
@@ -264,13 +335,14 @@ class DeviceDialog : AppCompatActivity() {
 
 
     fun setDevicesList(key: String, list: MutableList<Device>) {
-        var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+        var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
             RuntimeTypeAdapterFactory
                 .of(Device::class.java)
-                .registerSubtype(WaterHeater::class.java )
+                .registerSubtype(WaterHeater::class.java)
                 .registerSubtype(Heater::class.java)
                 .registerSubtype(AirConditioner::class.java)
-                    as RuntimeTypeAdapterFactory<Device>).create()
+                    as RuntimeTypeAdapterFactory<Device>
+        ).create()
         val type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
         val json: String = gson.toJson(list, type)
 

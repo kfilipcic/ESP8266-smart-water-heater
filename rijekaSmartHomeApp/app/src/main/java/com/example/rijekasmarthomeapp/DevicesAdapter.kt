@@ -13,26 +13,30 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.android.synthetic.main.device_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
+import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.io.Serializable
 import java.lang.ClassCastException
 import java.lang.Exception
 import java.lang.reflect.Type
+import java.net.SocketTimeoutException
 
-class DevicesAdapter(private var context: Context, private val cookies: Map<String, String>, private val url: String) :
-
+class DevicesAdapter(
+    private var context: Context,
+    private val cookies: Map<String, String>,
+    private val url: String
+) :
     RecyclerView.Adapter<DevicesAdapter.MyViewHolder>() {
 
     private lateinit var devicesListPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
 
-    private val adapterCallback:AdapterCallback
-    init{
-        try
-        {
+    private val adapterCallback: AdapterCallback
+
+    init {
+        try {
             adapterCallback = (context as AdapterCallback)
-        }
-        catch (e:Exception) {
+        } catch (e: Exception) {
             throw Exception("Activity must implement AdapterCallback.", e)
         }
     }
@@ -40,7 +44,6 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
     class MyViewHolder(val deviceView: View) : RecyclerView.ViewHolder(deviceView)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-
         val deviceView = LayoutInflater.from(parent.context)
             .inflate(R.layout.device_item, parent, false)
 
@@ -48,26 +51,49 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
         val holder = MyViewHolder(deviceView)
         val intent = Intent(deviceView.context, DeviceDialog::class.java)
             .putExtra("cookies", cookies as Serializable)
-        val acRemoteIntent = Intent(deviceView.context, ACRemoteDialog::class.java)
 
         deviceView.setOnClickListener {
-            if (getDevicesList()[holder.adapterPosition] is AirConditioner)
-                deviceView.context.startActivity(acRemoteIntent.putExtra("title", getDevicesList()[holder.adapterPosition].name)
-                    .putExtra("position", holder.adapterPosition))
-            else
-                deviceView.context.startActivity(intent
-                    .putExtra("position", holder.adapterPosition))
+            deviceView.context.startActivity(
+                intent
+                    .putExtra("position", holder.adapterPosition)
+            )
         }
 
-        holder.deviceView.deviceImageBtn.setOnClickListener{
+        holder.deviceView.deviceImageBtn.setOnClickListener {
+            // Switch state
+
             try {
                 GlobalScope.launch(IO) {
-                    Jsoup.connect(url + "water_heater_1_switch.html")
+                    var devicesList: MutableList<Device> = getDevicesList()
+                    var switchUrl: String = "default"
+                    when (devicesList[holder.adapterPosition]) {
+                        is WaterHeater -> switchUrl =
+                            "water_heater_" + devicesList[holder.adapterPosition].id_num.toString() + "_switch.html"
+                        is Heater -> switchUrl =
+                            "heater_" + devicesList[holder.adapterPosition].id_num.toString() + "_switch.html"
+                        is AirConditioner -> {
+                            val acRemoteIntent =
+                                Intent(deviceView.context, ACRemoteDialog::class.java)
+                            deviceView.context.startActivity(
+                                acRemoteIntent.putExtra(
+                                    "title",
+                                    devicesList[holder.adapterPosition].name
+                                )
+                                    .putExtra("position", holder.adapterPosition)
+                            )
+                            return@launch
+                        }
+                    }
+                    Jsoup.connect(url + switchUrl)
                         .cookies(cookies)
                         .get()
                     withContext(Dispatchers.Main) {
                         try {
-                            adapterCallback.onMethodCallback(getDevicesList()[holder.adapterPosition], url, cookies)
+                            adapterCallback.onMethodCallback(
+                                getDevicesList()[holder.adapterPosition],
+                                url,
+                                cookies
+                            )
                             notifyDataSetChanged()
                             deviceView.invalidate()
                         } catch (e: ClassCastException) {
@@ -75,58 +101,187 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
                         }
                     }
                 }
+            } catch (e: SocketTimeoutException) {
+                System.err.println("Session expired! Returning to the login screen...")
+                val loginIntent: Intent = Intent(context, MainActivity::class.java)
+                    .putExtra("errorCode", -1)
+                context.startActivity(loginIntent)
+
+                e.printStackTrace()
             } catch (e: Exception) {
-                println("Connecting with server and/or calling method MainScreen.getDataFromServer() unsuccessful")
+            System.err.println("Connecting with server and/or calling method MainScreen.getDataFromServer() unsuccessful")
+            e.printStackTrace()
+        }
+    }
+
+    return holder
+    }
+
+    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+        var device: Device = getDevicesList()[position]
+        var type = ""
+
+        fun getStateFromServer(
+            deviceName: String,
+            checkStateUrl: String
+        ) {
+            try {
+                val checkStateConnection =
+                    Jsoup.connect(url + checkStateUrl)
+                        .cookies(cookies)
+                        .get()
+                val checkStatePage = JSONObject(checkStateConnection.body().text())
+
+                when (checkStatePage.get(deviceName).toString()) {
+                    "0" -> device.state = "ON" // Yes, zero is for ON
+                    "1" -> device.state = "OFF"
+                }
+
+            } catch (e: Exception) {
+                System.err.println("Error getting device state data from the server!")
+                System.err.println(url + checkStateUrl)
                 e.printStackTrace()
             }
         }
 
-        return holder
-    }
+        fun getTemperatureFromServer(
+            deviceName: String,
+            checkTempUrl: String
+        ) {
+            try {
+                val checkTempConnection =
+                    Jsoup.connect(url + checkTempUrl)
+                        .cookies(cookies)
+                        .get()
+                val checkTempPage = JSONObject(checkTempConnection.body().text())
 
-    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val device: Device = getDevicesList()[position]
+                when (checkTempPage.get(deviceName).toString()) {
+                    "0" -> device.state = "ON" // Yes, zero is for ON
+                    "1" -> device.state = "OFF"
+                }
+
+                when (device) {
+                    is WaterHeater -> device.temperature = checkTempPage.get(deviceName).toString()
+                    is Heater -> device.temperature = checkTempPage.get(deviceName).toString()
+                    is AirConditioner -> device.temperature =
+                        checkTempPage.get(deviceName).toString()
+                }
+
+            } catch (e: Exception) {
+                System.err.println("Error getting device temperature data from the server!")
+                System.err.println(url + checkTempUrl)
+                e.printStackTrace()
+            }
+        }
+
 
         holder.deviceView.deviceNameTV.text = device.name
 
-        println(device.state)
-        if(device is WaterHeater) println("Omg" + device.waterTemperature)
-
         when (device) {
             is WaterHeater -> {
-                holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_noinfo)
-                holder.deviceView.tempTV.text = holder.deviceView.context.getString(R.string.tempText, device.waterTemperature)
+                type = "water_heater"
+                val checkStateUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "check.html"
+                val checkTempUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "temperature.html"
+                GlobalScope.launch(IO) {
+                    getStateFromServer(type, checkStateUrl)
+                    getTemperatureFromServer(type, checkTempUrl)
 
-                when(device.state) {
-                    "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_on)
-                    "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_off)
+                    withContext(Dispatchers.Main) {
+                        holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_noinfo)
+                        holder.deviceView.tempTV.text =
+                            holder.deviceView.context.getString(
+                                R.string.tempText,
+                                device.temperature
+                            )
+                        when (device.state) {
+                            "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_on)
+                            "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.boiler_off)
+                        }
+
+                        holder.deviceView.statusTV.text =
+                            holder.deviceView.context.getString(R.string.statusText, device.state)
+                        holder.deviceView.deviceNameTV.text = device.name
+
+                        val devList: MutableList<Device> = getDevicesList()
+                        devList[position] = device
+                        setDevicesList("devicesList", devList)
+                    }
                 }
             }
             is Heater -> {
-                holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_noinfo)
-                holder.deviceView.tempTV.text = holder.deviceView.context.getString(R.string.tempText, device.roomTemperature)
+                type = "heater"
+                val checkStateUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "check.html"
+                val checkTempUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "temperature.html"
 
-                when(device.state) {
-                    "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_on)
-                    "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_off)
+                GlobalScope.launch(IO) {
+                    getStateFromServer(type, checkStateUrl)
+                    getTemperatureFromServer(type, checkTempUrl)
+
+                    withContext(Dispatchers.Main) {
+                        holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_noinfo)
+                        holder.deviceView.tempTV.text =
+                            holder.deviceView.context.getString(
+                                R.string.tempText,
+                                device.temperature
+                            )
+                        when (device.state) {
+                            "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_on)
+                            "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.heater_off)
+                        }
+
+                        holder.deviceView.statusTV.text =
+                            holder.deviceView.context.getString(R.string.statusText, device.state)
+                        holder.deviceView.deviceNameTV.text = device.name
+
+                        val devList: MutableList<Device> = getDevicesList()
+                        devList[position] = device
+                        setDevicesList("devicesList", devList)
+                    }
                 }
             }
             is AirConditioner -> {
-                holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_noinfo)
-                holder.deviceView.tempTV.text = holder.deviceView.context.getString(R.string.tempText, device.roomTemperature)
+                type = "ac"
+                val checkStateUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "check.html"
+                val checkTempUrl: String =
+                    type + "_" + device.id_num.toString() + "_" + "temperature.html"
 
-                when(device.state) {
-                    "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_on)
-                    "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_off)
+                GlobalScope.launch(IO) {
+                    getStateFromServer(type, checkStateUrl)
+                    getTemperatureFromServer(type, checkTempUrl)
+
+                    withContext(Dispatchers.Main) {
+                        holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_noinfo)
+                        holder.deviceView.tempTV.text =
+                            holder.deviceView.context.getString(
+                                R.string.tempText,
+                                device.temperature
+                            )
+                        when (device.state) {
+                            "ON" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_on)
+                            "OFF" -> holder.deviceView.deviceImageBtn.setImageResource(R.drawable.ac_off)
+                        }
+
+                        holder.deviceView.statusTV.text =
+                            holder.deviceView.context.getString(R.string.statusText, device.state)
+                        holder.deviceView.deviceNameTV.text = device.name
+
+                        val devList: MutableList<Device> = getDevicesList()
+                        devList[position] = device
+                        setDevicesList("devicesList", devList)
+                    }
                 }
             }
         }
 
-        holder.deviceView.statusTV.text = holder.deviceView.context.getString(R.string.statusText, device.state)
-        holder.deviceView.deviceNameTV.text = device.name
+
     }
 
-    override fun getItemCount(): Int  {
+    override fun getItemCount(): Int {
         devicesListPreferences = context.getSharedPreferences("devicesList", 0)
         editor = devicesListPreferences.edit()
         return getDevicesList().size
@@ -137,14 +292,16 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
         val serializedObject: String? =
             devicesListPreferences.getString("devicesList", null)
         if (serializedObject != null) {
-            var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+            var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
                 RuntimeTypeAdapterFactory
                     .of(Device::class.java)
-                    .registerSubtype(WaterHeater::class.java )
+                    .registerSubtype(WaterHeater::class.java)
                     .registerSubtype(Heater::class.java)
                     .registerSubtype(AirConditioner::class.java)
-                        as RuntimeTypeAdapterFactory<Device>).create()
-            val type: Type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
+                        as RuntimeTypeAdapterFactory<Device>
+            ).create()
+            val type: Type =
+                TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
             arrayItems = gson.fromJson(serializedObject, type)
         }
         return arrayItems
@@ -152,13 +309,14 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
 
 
     fun setDevicesList(key: String, list: MutableList<Device>) {
-        var gson : Gson = GsonBuilder().registerTypeAdapterFactory(
+        var gson: Gson = GsonBuilder().registerTypeAdapterFactory(
             RuntimeTypeAdapterFactory
                 .of(Device::class.java)
-                .registerSubtype(WaterHeater::class.java )
+                .registerSubtype(WaterHeater::class.java)
                 .registerSubtype(Heater::class.java)
                 .registerSubtype(AirConditioner::class.java)
-                    as RuntimeTypeAdapterFactory<Device>).create()
+                    as RuntimeTypeAdapterFactory<Device>
+        ).create()
         val type = TypeToken.getParameterized(MutableList::class.java, Device::class.java).type
         val json: String = gson.toJson(list, type)
 
@@ -169,6 +327,7 @@ class DevicesAdapter(private var context: Context, private val cookies: Map<Stri
         editor.putString(key, value)
         editor.commit()
     }
+
 
 }
 

@@ -268,8 +268,7 @@ void manage_rules() {
 
     if (startTimeMs >= 0 && startTimeHHmmMs >= 0 && endTimeHHmmMs >= 0) {
         // Serial.println("G");
-        Serial.printf("startTimeMs: %lld\n curr_time_ms %lld\n", startTimeMs,
-                      curr_time_ms);
+        //Serial.printf("startTimeMs: %lld\n curr_time_ms %lld\n", startTimeMs, curr_time_ms);
         if (startTimeMs <= curr_time_ms) {
             long long int curr_daytime_ms =
                 hour * 3600000 + minute * 60000 + second * 1000;
@@ -324,7 +323,6 @@ void manage_temperature() {
                     min = WATER_TEMP_MIN;
                     max = WATER_TEMP_MAX;
                 } else if (strstr(type, "heater") != NULL) {
-                    Serial.println("heater");
                     temp = &(heater[index].temp);
                     dev_str = "heater";
                     min = ROOM_TEMP_MIN;
@@ -350,6 +348,7 @@ void loop() {
 
     client = server.available();
     if (client) {
+        Serial.println("client available");
         boolean currentLineIsBlank = true;
         bufferSize = 0;
 
@@ -375,7 +374,7 @@ void loop() {
                     currentLineIsBlank = false;
                 }
             }
-            yield();
+            //yield();
         }
         // delay(10);
 
@@ -700,7 +699,7 @@ boolean loggedIn() {
     // going to need a parse cookie function
     webParser.parseQuery(queryBuffer, "ARDUINOSESSIONID", param_value);
 
-    if (arduinoSession == atol(param_value)) {
+    if (arduinoSession == atoll(param_value)) {
         return true;
     } else {
         return false;
