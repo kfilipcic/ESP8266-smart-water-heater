@@ -1,10 +1,8 @@
 package com.example.rijekasmarthomeapp
 
-import android.app.AlarmManager
-import android.app.DatePickerDialog
-import android.app.PendingIntent
-import android.app.TimePickerDialog
+import android.app.*
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.icu.text.SimpleDateFormat
@@ -25,6 +23,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import java.io.Serializable
+import java.lang.Exception
+import java.lang.NumberFormatException
 import java.lang.reflect.Type
 import java.util.*
 import kotlin.collections.ArrayList
@@ -47,7 +47,7 @@ class DeviceDialog : AppCompatActivity() {
         val cookies: Map<String, String> =
             this.intent.getSerializableExtra("cookies") as Map<String, String>
         val position: Int = this.intent.getIntExtra("position", -1)
-        val devicesList: MutableList<Device> = getDevicesList()
+        var devicesList: MutableList<Device> = getDevicesList()
         val device: Device = devicesList[position]
 
         var startTimeDate = ""
@@ -119,8 +119,58 @@ class DeviceDialog : AppCompatActivity() {
             c.timeInMillis = device.startDate
             startDate.text = SimpleDateFormat("dd.MM.yyyy")
                 .format(c.time)
-            startTime.text = fixTimeFormat((floor(device.startTimeHHmm / 3600000.0)).toInt().toString(), (((device.startTimeHHmm - (floor(device.startTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt().toString())
-            endTime.text = fixTimeFormat((floor(device.endTimeHHmm / 3600000.0)).toInt().toString(), (((device.endTimeHHmm - (floor(device.endTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt().toString())
+            startTime.text = fixTimeFormat(
+                (floor(device.startTimeHHmm / 3600000.0)).toInt().toString(),
+                (((device.startTimeHHmm - (floor(device.startTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt()
+                    .toString()
+            )
+            endTime.text = fixTimeFormat(
+                (floor(device.endTimeHHmm / 3600000.0)).toInt().toString(),
+                (((device.endTimeHHmm - (floor(device.endTimeHHmm / 3600000.0) * 3600000)) / 60000)).toInt()
+                    .toString()
+            )
+        }
+
+        when (device) {
+            is WaterHeater -> {
+                if (device.tempNotifs) {
+                    tempCheckBox.isChecked = true
+                    for (v: View in tempViews) {
+                        v.isEnabled = !v.isEnabled
+                    }
+                    minTempET.setText(device.minTemp.toString())
+                    maxTempET.setText(device.maxTemp.toString())
+                }
+                if (device.autoRegulateTemperature) {
+                    temp2CheckBox.isChecked = true
+                }
+            }
+            is Heater -> {
+                if (device.tempNotifs) {
+                    tempCheckBox.isChecked = true
+                    for (v: View in tempViews) {
+                        v.isEnabled = !v.isEnabled
+                    }
+                    minTempET.setText(device.minTemp.toString())
+                    maxTempET.setText(device.maxTemp.toString())
+                }
+                if (device.autoRegulateTemperature) {
+                    temp2CheckBox.isChecked = true
+                }
+            }
+            is AirConditioner -> {
+                if (device.tempNotifs) {
+                    tempCheckBox.isChecked = true
+                    for (v: View in tempViews) {
+                        v.isEnabled = !v.isEnabled
+                    }
+                    minTempET.setText(device.minTemp.toString())
+                    maxTempET.setText(device.maxTemp.toString())
+                }
+                if (device.autoRegulateTemperature) {
+                    temp2CheckBox.isChecked = true
+                }
+            }
         }
 
         startDate.setOnClickListener {
@@ -177,6 +227,29 @@ class DeviceDialog : AppCompatActivity() {
             startTimeMs = "-1"
             endTimeMs = "-1"
 
+            device.startDate = -1
+            device.startTimeHHmm = -1
+            device.endTimeHHmm = -1
+
+            when (device) {
+                is WaterHeater -> {
+                    device.tempNotifs = false
+                    device.autoRegulateTemperature = false
+                }
+                is Heater -> {
+                    device.tempNotifs = false
+                    device.autoRegulateTemperature = false
+                }
+                is AirConditioner -> {
+                    device.tempNotifs = false
+                    device.autoRegulateTemperature = false
+                }
+            }
+
+
+            devicesList[position] = device
+            setDevicesList("devicesList", devicesList)
+
             ruleUrlRequestString =
                 "rule?starttimems=$startTimeDate&starttime=$startTimeMs&endtime=$endTimeMs"
 
@@ -187,6 +260,9 @@ class DeviceDialog : AppCompatActivity() {
                     .cookies(cookies)
                     .get()
             }
+
+            finish()
+            startActivity(intent)
         }
 
         tempCheckBox.setOnCheckedChangeListener { compoundButton: CompoundButton, b: Boolean ->
@@ -201,6 +277,7 @@ class DeviceDialog : AppCompatActivity() {
         }
 
         okBtn.setOnClickListener {
+            var canFinish = true
             val calendar: Calendar = Calendar.getInstance()
             println("1: " + startDate.text)
             val date: List<String> = startDate.text.split(".")
@@ -215,7 +292,10 @@ class DeviceDialog : AppCompatActivity() {
                 time[0].toInt(),
                 time[1].toInt()
             )
-            calendar.add(Calendar.MONTH, -1) // For some odd reason, it is adding +1 month to the date after the previous line
+            calendar.add(
+                Calendar.MONTH,
+                -1
+            ) // For some odd reason, it is adding +1 month to the date after the previous line
             startTimeDate = calendar.timeInMillis.toString()
 
             val endtime: List<String> = endTime.text.split(":")
@@ -237,25 +317,45 @@ class DeviceDialog : AppCompatActivity() {
 
 
             if (tempCheckBox.isChecked) {
-                when (device) {
-                    is WaterHeater -> {
-                        device.minTemp = minTempET.text.toString().toDouble()
-                        device.maxTemp = maxTempET.text.toString().toDouble()
+                try {
+                    when (device) {
+                        is WaterHeater -> {
+                            device.minTemp = minTempET.text.toString().toDouble()
+                            device.maxTemp = maxTempET.text.toString().toDouble()
+                            if (device.minTemp > device.maxTemp) throw NumberFormatException()
+                        }
+                        is Heater -> {
+                            device.minTemp = minTempET.text.toString().toDouble()
+                            device.maxTemp = maxTempET.text.toString().toDouble()
+                            if (device.minTemp > device.maxTemp) throw NumberFormatException()
+                        }
+                        is AirConditioner -> {
+                            device.minTemp = minTempET.text.toString().toDouble()
+                            device.maxTemp = maxTempET.text.toString().toDouble()
+                            if (device.minTemp > device.maxTemp) throw NumberFormatException()
+                        }
                     }
-                    is Heater -> {
-                        device.minTemp = minTempET.text.toString().toDouble()
-                        device.maxTemp = maxTempET.text.toString().toDouble()
+                } catch (e: NumberFormatException) {
+                    val builder = AlertDialog.Builder(this)
+                    builder.setTitle("Invalid temperature values")
+                    builder.setMessage("Please enter valid temperature values!\n\nNote: Minimum temperature value has to be smaller or equal to maximum temperature value.")
+
+                    builder.setPositiveButton(android.R.string.yes) { dialog, which ->
                     }
-                    is AirConditioner -> {
-                        device.minTemp = minTempET.text.toString().toDouble()
-                        device.maxTemp = maxTempET.text.toString().toDouble()
-                    }
+
+                    canFinish = false
+                    builder.show()
+
+                } catch (e: Exception) {
+                    System.err.println("Unknown error while getting temperature values from the DeviceDialog EditTexts")
+                    e.printStackTrace()
                 }
 
                 var notificationDetails: ArrayList<String> = arrayListOf()
                 when (device) {
                     is WaterHeater -> {
                         device.tempNotifs = true
+                        device.autoRegulateTemperature = temp2CheckBox.isChecked
                         devicesList[position] = device
                         setDevicesList("devicesList", devicesList)
                         notificationDetails = arrayListOf(
@@ -265,6 +365,7 @@ class DeviceDialog : AppCompatActivity() {
                     }
                     is Heater -> {
                         device.tempNotifs = true
+                        device.autoRegulateTemperature = temp2CheckBox.isChecked
                         devicesList[position] = device
                         setDevicesList("devicesList", devicesList)
                         notificationDetails = arrayListOf(
@@ -274,6 +375,8 @@ class DeviceDialog : AppCompatActivity() {
                     }
                     is AirConditioner -> {
                         device.tempNotifs = true
+                        device.autoRegulateTemperature = temp2CheckBox.isChecked
+                        if (temp2CheckBox.isChecked) device.autoRegulateTemperature = true
                         devicesList[position] = device
                         setDevicesList("devicesList", devicesList)
                         notificationDetails = arrayListOf(
@@ -305,10 +408,16 @@ class DeviceDialog : AppCompatActivity() {
                     SystemClock.elapsedRealtime(),
                     pendingIntent
                 )
+            } else {
+                when (device) {
+                    is WaterHeater -> device.tempNotifs = false
+                    is Heater -> device.tempNotifs = false
+                    is AirConditioner -> device.tempNotifs = false
+                }
             }
 
             setDevicesList("devicesList", devicesList)
-            this.finish()
+            if (canFinish) this.finish()
         }
 
     }
@@ -353,6 +462,5 @@ class DeviceDialog : AppCompatActivity() {
         editor.putString(key, value)
         editor.commit()
     }
-
 
 }

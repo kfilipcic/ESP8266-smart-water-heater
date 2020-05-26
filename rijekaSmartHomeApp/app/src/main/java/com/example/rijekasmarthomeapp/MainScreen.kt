@@ -1,5 +1,6 @@
 package com.example.rijekasmarthomeapp
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
@@ -23,6 +24,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.lang.IndexOutOfBoundsException
 import java.lang.reflect.Type
 
 @Suppress("UNCHECKED_CAST")
@@ -82,8 +84,18 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
                 // Shows the server time - needs to be in this method
                 // because it changes the UI during runtime
                 runOnUiThread {
-                    dateText.text = timeDateString[1].replace("Date: ", "")
-                    timeText.text = timeDateString[0].replace("Time: ", "")
+                    try {
+                        dateText.text = timeDateString[1].replace("Date: ", "")
+                        timeText.text = timeDateString[0].replace("Time: ", "")
+                    } catch (e: IndexOutOfBoundsException) {
+                       System.err.println("dateText and/or timeText is out of bounds. Possibly because the session is timed out and it is not receiving data. Returning to login screen...")
+                        e.printStackTrace()
+                        // Go back to login screen
+                        finish()
+                        val loginIntent = Intent(applicationContext, MainActivity::class.java)
+                            .putExtra("errorCode", -1)
+                        startActivity(loginIntent)
+                    }
 
                     // Show single digit numbers as double digits (using regex)
                     // Example: 03:30:05 instead of 3:30:5
@@ -197,6 +209,12 @@ class MainScreen : AppCompatActivity(), AdapterCallback {
     fun set(key: String, value: String) {
         editor.putString(key, value)
         editor.commit()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        println("onactivityresultz")
+        viewAdapter.notifyDataSetChanged()
     }
 }
 

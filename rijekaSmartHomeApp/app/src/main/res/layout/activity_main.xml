@@ -12,7 +12,7 @@
     <LinearLayout
         android:id="@+id/loginLayout"
         android:layout_width="410dp"
-        android:layout_height="250dp"
+        android:layout_height="280dp"
         android:layout_marginTop="250dp"
         android:gravity="center"
         android:orientation="vertical"
@@ -55,6 +55,15 @@
             android:ems="10"
             android:hint="@string/passwordHint"
             android:inputType="textPassword" />
+
+        <TextView
+            android:id="@+id/errorTV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="TextView"
+            android:textColor="#DD1313"
+            android:visibility="invisible" />
 
         <Space
             android:layout_width="wrap_content"

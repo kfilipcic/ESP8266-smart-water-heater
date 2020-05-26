@@ -59,4 +59,10 @@ public class Heater extends Device {
     public void setMaxTemp(double maxTemp) {
         this.maxTemp = maxTemp;
     }
+
+    public void setAutoRegulateTemperature(boolean autoRegulateTemperature) {
+        this.autoRegulateTemperature = autoRegulateTemperature;
+    }
+
+    public boolean getAutoRegulateTemperature() { return autoRegulateTemperature; }
 }

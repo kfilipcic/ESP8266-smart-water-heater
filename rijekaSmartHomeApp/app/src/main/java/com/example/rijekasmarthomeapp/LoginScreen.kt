@@ -47,6 +47,12 @@ class MainActivity : AppCompatActivity() {
 
         val saveLogin = loginPreferences.getBoolean("saveLogin", false)
 
+        val errorTV: TextView = findViewById(R.id.errorTV)
+
+        if (intent.getIntExtra("errorCode", 0) == -1) {
+            errorTV.visibility = View.VISIBLE
+        }
+
         if (saveLogin) {
             usernameEditText.setText(loginPreferences.getString("username", ""))
             usernameEditText.setText(loginPreferences.getString("password", ""))

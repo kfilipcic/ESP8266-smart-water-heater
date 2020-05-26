@@ -346,6 +346,7 @@ void loop() {
     theClock();
     manage_rules();
 
+    Serial.println("start of loop");
     client = server.available();
     if (client) {
         Serial.println("client available");

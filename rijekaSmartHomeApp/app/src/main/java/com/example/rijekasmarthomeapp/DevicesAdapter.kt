@@ -3,6 +3,7 @@ package com.example.rijekasmarthomeapp
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -74,13 +75,23 @@ class DevicesAdapter(
                         is AirConditioner -> {
                             val acRemoteIntent =
                                 Intent(deviceView.context, ACRemoteDialog::class.java)
-                            deviceView.context.startActivity(
+                                    .putExtra(
+                                        "title",
+                                        devicesList[holder.adapterPosition].name
+                                    )
+                                    .putExtra("position", holder.adapterPosition)
+                                    .putExtra("cookies", cookies)
+                            val bundle: Bundle = Bundle()
+                            bundle.putSerializable("cookies", cookies)
+                            (context as MainScreen).startActivityForResult(acRemoteIntent, 0)
+                            /*deviceView.context.startActivity(
                                 acRemoteIntent.putExtra(
                                     "title",
                                     devicesList[holder.adapterPosition].name
                                 )
                                     .putExtra("position", holder.adapterPosition)
-                            )
+                                    .putExtra("cookies", cookies)
+                            )*/
                             return@launch
                         }
                     }
@@ -109,12 +120,12 @@ class DevicesAdapter(
 
                 e.printStackTrace()
             } catch (e: Exception) {
-            System.err.println("Connecting with server and/or calling method MainScreen.getDataFromServer() unsuccessful")
-            e.printStackTrace()
+                System.err.println("Connecting with server and/or calling method MainScreen.getDataFromServer() unsuccessful")
+                e.printStackTrace()
+            }
         }
-    }
 
-    return holder
+        return holder
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
@@ -327,7 +338,6 @@ class DevicesAdapter(
         editor.putString(key, value)
         editor.commit()
     }
-
 
 }
 
