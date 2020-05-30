@@ -34,6 +34,8 @@ import kotlin.math.round
 class DeviceDialog : AppCompatActivity() {
     private lateinit var devicesListPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
+    private lateinit var cookiePreferences: SharedPreferences
+    private lateinit var cookieEditor: SharedPreferences.Editor
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,9 +45,13 @@ class DeviceDialog : AppCompatActivity() {
         devicesListPreferences = applicationContext.getSharedPreferences("devicesList", 0)
         editor = devicesListPreferences.edit()
 
-        val url: String = getString(R.string.mainUrl)
-        val cookies: Map<String, String> =
-            this.intent.getSerializableExtra("cookies") as Map<String, String>
+        cookiePreferences = applicationContext.getSharedPreferences("cookies", 0)
+        cookieEditor = cookiePreferences.edit()
+
+        val cookie = cookiePreferences.getString("cookies", null)
+        //val cookies: Map<String, String> =
+        //    this.intent.getSerializableExtra("cookies") as Map<String, String>
+
         val position: Int = this.intent.getIntExtra("position", -1)
         var devicesList: MutableList<Device> = getDevicesList()
         val device: Device = devicesList[position]
@@ -256,8 +262,8 @@ class DeviceDialog : AppCompatActivity() {
             println(ruleUrlRequestString)
 
             GlobalScope.launch(IO) {
-                Jsoup.connect(url + ruleUrlRequestString)
-                    .cookies(cookies)
+                Jsoup.connect(Secrets().url + ruleUrlRequestString)
+                    .cookie("ARDUINOSESSIONID", cookie)
                     .get()
             }
 
@@ -281,9 +287,9 @@ class DeviceDialog : AppCompatActivity() {
             val calendar: Calendar = Calendar.getInstance()
             println("1: " + startDate.text)
             val date: List<String> = startDate.text.split(".")
-            for (j in 0..2) {
-                println("date:" + date[j])
-            }
+            //for (j in 0..2) {
+            //    println("date:" + date[j])
+            //}
             val time: List<String> = startTime.text.split(":")
             calendar.set(
                 date[2].toInt(),
@@ -306,8 +312,8 @@ class DeviceDialog : AppCompatActivity() {
                 "rule?starttimems=$startTimeDate&starttime=$startTimeMs&endtime=$endTimeMs"
 
             GlobalScope.launch(IO) {
-                Jsoup.connect(url + ruleUrlRequestString)
-                    .cookies(cookies)
+                Jsoup.connect(Secrets().url + ruleUrlRequestString)
+                    .cookie("ARDUINOSESSIONID", cookie)
                     .get()
             }
 
@@ -388,7 +394,7 @@ class DeviceDialog : AppCompatActivity() {
 
                 val broadcastIntent = Intent(this, CheckTemperatureAlarmReceiver::class.java)
                 broadcastIntent.putStringArrayListExtra("notif", notificationDetails)
-                broadcastIntent.putExtra("cookies", cookies as Serializable)
+                //broadcastIntent.putExtra("cookies", cookies as Serializable)
 
                 val alarmManager =
                     applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager

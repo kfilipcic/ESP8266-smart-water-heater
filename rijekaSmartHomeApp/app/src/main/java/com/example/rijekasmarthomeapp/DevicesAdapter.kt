@@ -1,12 +1,15 @@
 package com.example.rijekasmarthomeapp
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -24,15 +27,16 @@ import java.net.SocketTimeoutException
 
 class DevicesAdapter(
     private var context: Context,
-    private val cookies: Map<String, String>,
     private val url: String
 ) :
     RecyclerView.Adapter<DevicesAdapter.MyViewHolder>() {
 
     private lateinit var devicesListPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
-
+    private lateinit var cookiePreferences: SharedPreferences
+    private lateinit var cookieEditor: SharedPreferences.Editor
     private val adapterCallback: AdapterCallback
+    private var cookie: String? = null
 
     init {
         try {
@@ -48,10 +52,15 @@ class DevicesAdapter(
         val deviceView = LayoutInflater.from(parent.context)
             .inflate(R.layout.device_item, parent, false)
 
+        cookiePreferences = parent.context.getSharedPreferences("cookies", 0)
+        cookieEditor = cookiePreferences.edit()
+
+       cookie = cookiePreferences.getString("cookies", null)
+
 
         val holder = MyViewHolder(deviceView)
         val intent = Intent(deviceView.context, DeviceDialog::class.java)
-            .putExtra("cookies", cookies as Serializable)
+            //.putExtra("cookies", cookies as Serializable)
 
         deviceView.setOnClickListener {
             deviceView.context.startActivity(
@@ -80,9 +89,9 @@ class DevicesAdapter(
                                         devicesList[holder.adapterPosition].name
                                     )
                                     .putExtra("position", holder.adapterPosition)
-                                    .putExtra("cookies", cookies)
-                            val bundle: Bundle = Bundle()
-                            bundle.putSerializable("cookies", cookies)
+                                    //.putExtra("cookies", cookies)
+                           // val bundle: Bundle = Bundle()
+                           // bundle.putSerializable("cookies", cookies)
                             (context as MainScreen).startActivityForResult(acRemoteIntent, 0)
                             /*deviceView.context.startActivity(
                                 acRemoteIntent.putExtra(
@@ -95,21 +104,30 @@ class DevicesAdapter(
                             return@launch
                         }
                     }
-                    Jsoup.connect(url + switchUrl)
-                        .cookies(cookies)
-                        .get()
-                    withContext(Dispatchers.Main) {
-                        try {
-                            adapterCallback.onMethodCallback(
-                                getDevicesList()[holder.adapterPosition],
-                                url,
-                                cookies
-                            )
-                            notifyDataSetChanged()
-                            deviceView.invalidate()
-                        } catch (e: ClassCastException) {
-                            e.printStackTrace()
+                    try {
+                        Jsoup.connect(url + switchUrl)
+                            //.cookies(cookies)
+                            .cookie("ARDUINOSESSIONID", cookie)
+                            .get()
+                        withContext(Dispatchers.Main) {
+                            try {
+                                adapterCallback.onMethodCallback(
+                                    getDevicesList()[holder.adapterPosition],
+                                    url
+                                )
+                                notifyDataSetChanged()
+                                deviceView.invalidate()
+                            } catch (e: ClassCastException) {
+                                e.printStackTrace()
+                            }
                         }
+                    } catch (e: SocketTimeoutException) {
+                        System.err.println("Session expired! Returning to the login screen...")
+                        val loginIntent: Intent = Intent(context, MainActivity::class.java)
+                            .putExtra("errorCode", -1)
+                        context.startActivity(loginIntent)
+
+                        e.printStackTrace()
                     }
                 }
             } catch (e: SocketTimeoutException) {
@@ -125,6 +143,12 @@ class DevicesAdapter(
             }
         }
 
+        holder.deviceView.graphImageBtn.setOnClickListener {
+            val graphIntent = Intent(context, GraphActivity::class.java)
+                .putExtra("position", holder.adapterPosition)
+            context.startActivity(graphIntent)
+        }
+
         return holder
     }
 
@@ -132,15 +156,17 @@ class DevicesAdapter(
         var device: Device = getDevicesList()[position]
         var type = ""
 
-        fun getStateFromServer(
+        suspend fun getStateFromServer(
             deviceName: String,
             checkStateUrl: String
         ) {
             try {
-                val checkStateConnection =
+                val checkStateConnection = withContext(Dispatchers.IO) {
                     Jsoup.connect(url + checkStateUrl)
-                        .cookies(cookies)
+                        //.cookies(cookies)
+                        .cookie("ARDUINOSESSIONID", cookie)
                         .get()
+                }
                 val checkStatePage = JSONObject(checkStateConnection.body().text())
 
                 when (checkStatePage.get(deviceName).toString()) {
@@ -151,19 +177,33 @@ class DevicesAdapter(
             } catch (e: Exception) {
                 System.err.println("Error getting device state data from the server!")
                 System.err.println(url + checkStateUrl)
+
+                (context as Activity).finish()
+
+                (context as Activity).overridePendingTransition(0, 0)
+
+                val loginIntent = Intent(context, MainActivity::class.java)
+                    .putExtra("errorCode", -1)
+                context.startActivity(loginIntent)
+
+                (context as Activity).overridePendingTransition(0, 0)
+
                 e.printStackTrace()
+                return
             }
         }
 
-        fun getTemperatureFromServer(
+        suspend fun getTemperatureFromServer(
             deviceName: String,
             checkTempUrl: String
         ) {
             try {
-                val checkTempConnection =
+                val checkTempConnection = withContext(Dispatchers.IO) {
                     Jsoup.connect(url + checkTempUrl)
-                        .cookies(cookies)
+                        //.cookies(cookies)
+                        .cookie("ARDUINOSESSIONID", cookie)
                         .get()
+                }
                 val checkTempPage = JSONObject(checkTempConnection.body().text())
 
                 when (checkTempPage.get(deviceName).toString()) {
@@ -178,10 +218,20 @@ class DevicesAdapter(
                         checkTempPage.get(deviceName).toString()
                 }
 
+                val devList: MutableList<Device> = getDevicesList()
+                devList[position] = device
+                setDevicesList("devicesList", devList)
+
             } catch (e: Exception) {
                 System.err.println("Error getting device temperature data from the server!")
                 System.err.println(url + checkTempUrl)
                 e.printStackTrace()
+
+                (context as Activity).finish()
+
+                val loginIntent = Intent(context, MainActivity::class.java)
+                    .putExtra("errorCode", -1)
+                context.startActivity(loginIntent)
             }
         }
 
@@ -342,6 +392,6 @@ class DevicesAdapter(
 }
 
 interface AdapterCallback {
-    suspend fun onMethodCallback(device: Device, url: String, cookies: Map<String, String>)
+    suspend fun onMethodCallback(device: Device, url: String)
 }
 

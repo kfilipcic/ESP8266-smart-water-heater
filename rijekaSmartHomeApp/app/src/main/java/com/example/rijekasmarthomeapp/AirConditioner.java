@@ -7,6 +7,12 @@ public class AirConditioner extends Device {
     private boolean autoRegulateTemperature;
     private double minTemp = -500.0;
     private double maxTemp = 500.0;
+    private int fanLevel = -1;
+    private int tempLevel = 0;
+    private int mode = -1;
+    private boolean swing = false;
+    private boolean sleep = false;
+    private boolean direct = false;
 
     public AirConditioner(String name, String state, String temperature, String moisture, int id_num) {
         super(name, state, id_num);
@@ -71,4 +77,46 @@ public class AirConditioner extends Device {
     }
 
     public boolean getAutoRegulateTemperature() { return autoRegulateTemperature; }
+
+    public int getFanLevel() {
+        return fanLevel;
+    }
+
+    public void setFanLevel(int fanLevel) {
+        this.fanLevel = fanLevel;
+    }
+
+    public void setSwing(boolean swing) {
+        this.swing = swing;
+    }
+
+    public boolean getSwing() { return swing; }
+
+    public void setSleep(boolean sleep) {
+        this.sleep = sleep;
+    }
+
+    public boolean getSleep() { return sleep; }
+
+    public void setDirect(boolean direct) {
+        this.direct = direct;
+    }
+
+    public boolean getDirect() { return direct; }
+
+    public int getTempLevel() {
+        return tempLevel;
+    }
+
+    public void setTempLevel(int tempLevel) {
+        this.tempLevel = tempLevel;
+    }
+
+    public int getMode() {
+        return mode;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+    }
 }

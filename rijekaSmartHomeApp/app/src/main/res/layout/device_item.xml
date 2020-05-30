@@ -2,6 +2,7 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardCornerRadius="10dp"
@@ -30,22 +31,36 @@
             app:layout_constraintVertical_bias="0.513"
             app:srcCompat="@drawable/boiler_noinfo" />
 
+        <ImageButton
+            android:id="@+id/graphImageBtn"
+            android:layout_width="76dp"
+            android:layout_height="57dp"
+            android:layout_marginStart="324dp"
+            android:layout_marginTop="28dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/rounded_corners"
+            android:contentDescription="@string/waterHeaterButtonDescription"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/graphs_icon" />
+
         <TextView
             android:id="@+id/deviceNameTV"
-            android:layout_width="250dp"
+            android:layout_width="249dp"
             android:layout_height="27dp"
+            android:layout_marginStart="20dp"
             android:layout_marginTop="4dp"
             android:text="@string/nameText"
             android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.384"
             app:layout_constraintStart_toEndOf="@+id/deviceImageBtn"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tempTV"
-            android:layout_width="250dp"
-            android:layout_height="19dp"
+            android:layout_width="146dp"
+            android:layout_height="21dp"
             android:layout_marginStart="20dp"
             android:layout_marginBottom="16dp"
             android:text="@string/tempText"
@@ -54,8 +69,8 @@
 
         <TextView
             android:id="@+id/statusTV"
-            android:layout_width="250dp"
-            android:layout_height="21dp"
+            android:layout_width="108dp"
+            android:layout_height="20dp"
             android:layout_marginStart="20dp"
             android:text="@string/statusText"
             app:layout_constraintBottom_toTopOf="@+id/tempTV"

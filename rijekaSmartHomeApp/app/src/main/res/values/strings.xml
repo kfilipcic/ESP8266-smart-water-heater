@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">rijekaSmartHomeApp</string>
+    <string name="app_name">Smart Home App</string>
     <string name="usernameHint">Username</string>
     <string name="passwordHint">Password</string>
     <string name="textviewLogin">Login:</string>
@@ -31,4 +31,7 @@
     <string name="maxTempText">Max. temperature (°C):</string>
     <string name="alert_channel_name">Alert channel</string>
     <string name="alert_channel_description">This channel sends alerts</string>
+    <string name="average_temp_tv">Average temperature: %1$s°C</string>
+    <string name="total_time_tv">Total time running: %1$s</string>
+    <string name="curr_temp_tv">Current temperature: %1$s°C</string>
 </resources>

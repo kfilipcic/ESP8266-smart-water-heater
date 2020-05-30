@@ -19,7 +19,7 @@
 #define MAX 100
 #define ROOM_TEMP_DEFAULT 21
 #define MOISTURE_DEFAULT 30
-#define CHAR_MAX 30
+#define CHARMAX 30
 
 struct wHeater {
     char name[MAX];
@@ -32,7 +32,13 @@ struct AC {
     char name[];
     float temp;
     float humidity;
+    int tempLevel = 21;
     uint8 state;
+    uint8 mode;
+    uint8 fan;
+    bool swing;
+    bool direct;
+    bool sleep;
 };
 
 struct Heater {
@@ -144,24 +150,31 @@ void setup() {
 
     for (int i = 0; i < 2; i++) {
         String wName = "water_heater_" + String(i + 1);
-        char wname[CHAR_MAX];
-        wName.toCharArray(wname, CHAR_MAX);
+        char wname[CHARMAX];
+        wName.toCharArray(wname, CHARMAX);
         strcpy(water_heater[i].name, wname);
         water_heater[i].room_temp = ROOM_TEMP_DEFAULT;
         water_heater[i].temp = 50;
         water_heater[i].state = 1;
 
         String acName = "ac_" + String(i + 1);
-        char acname[CHAR_MAX];
-        acName.toCharArray(acname, CHAR_MAX);
+        char acname[CHARMAX];
+        acName.toCharArray(acname, CHARMAX);
         strcpy(ac[i].name, acname);
+
         ac[i].temp = ROOM_TEMP_DEFAULT;
         ac[i].humidity = MOISTURE_DEFAULT;
         ac[i].state = 1;
+        ac[i].direct = false;
+        ac[i].swing = false;
+        ac[i].sleep = false;
+        ac[i].fan = 0;
+        ac[i].mode = 0;
+        ac[i].tempLevel = ROOM_TEMP_DEFAULT;
 
         String hName = "heater_" + String(i + 1);
-        char hname[CHAR_MAX];
-        hName.toCharArray(hname, CHAR_MAX);
+        char hname[CHARMAX];
+        hName.toCharArray(hname, CHARMAX);
         strcpy(heater[i].name, hname);
         heater[i].temp = ROOM_TEMP_DEFAULT;
         heater[i].humidity = MOISTURE_DEFAULT;
@@ -268,7 +281,8 @@ void manage_rules() {
 
     if (startTimeMs >= 0 && startTimeHHmmMs >= 0 && endTimeHHmmMs >= 0) {
         // Serial.println("G");
-        //Serial.printf("startTimeMs: %lld\n curr_time_ms %lld\n", startTimeMs, curr_time_ms);
+        // Serial.printf("startTimeMs: %lld\n curr_time_ms %lld\n", startTimeMs,
+        // curr_time_ms);
         if (startTimeMs <= curr_time_ms) {
             long long int curr_daytime_ms =
                 hour * 3600000 + minute * 60000 + second * 1000;
@@ -313,9 +327,9 @@ void manage_temperature() {
                 float *temp;
                 float min = 0;
                 float max = 0;
-                char type[CHAR_MAX];
+                char type[CHARMAX];
 
-                (types[i]).toCharArray(type, CHAR_MAX);
+                (types[i]).toCharArray(type, CHARMAX);
 
                 if (strstr(type, "water_heater") != NULL) {
                     temp = &(water_heater[index].temp);
@@ -346,8 +360,10 @@ void loop() {
     theClock();
     manage_rules();
 
-    Serial.println("start of loop");
+    // Serial.println("start of loop");
     client = server.available();
+    Serial.println(client.available());
+
     if (client) {
         Serial.println("client available");
         boolean currentLineIsBlank = true;
@@ -375,7 +391,7 @@ void loop() {
                     currentLineIsBlank = false;
                 }
             }
-            //yield();
+            // yield();
         }
         // delay(10);
 
@@ -394,6 +410,55 @@ void check_state(char type[], int index) {
         client.println("{'heater': '" + String(heater[index].state) + "'}");
     else if (strstr(type, "ac") != NULL)
         client.println("{'ac': '" + String(ac[index].state) + "'}");
+}
+
+void check_bool(char type[], bool &state) {
+    if (state) {
+        client.println("{'" + String(type) + "': '1'}");
+    } else {
+        client.println("{'" + String(type) + "': '0'}");
+    }
+}
+
+void switch_bool(char type[], bool &state) {
+    state = !state;
+    if (state) {
+        client.println("{'" + String(type) + "': '1'}");
+    } else {
+        client.println("{'" + String(type) + "': '0'}");
+    }
+}
+
+void check_ac_mode(uint8 mode) {
+    client.println("{'ac': '" + String(mode) + "'}");
+}
+
+void check_ac_fan(uint8 fan) {
+    client.println("{'ac': '" + String(fan) + "'}");
+}
+
+void switch_ac_mode(uint8 &mode) {
+    mode = (mode+1) % 5;
+    client.println("{'ac': '" + String(mode) + "'}");
+}
+
+void switch_ac_fan(uint8 &fan) {
+    fan = (fan+1) % 4;
+    client.println("{'ac': '" + String(fan) + "'}");
+}
+
+void check_ac_temp(int &temp) {
+    client.println("{'ac': '" + String(temp) + "'}");
+}
+
+void ac_temp_up(int &temp) {
+    if (temp < 30) temp++;
+    client.println("{'ac': '" + String(temp) + "'}");
+}
+
+void ac_temp_down(int &temp) {
+    if (temp > 17) temp--;
+    client.println("{'ac': '" + String(temp) + "'}");
 }
 
 void switcher(char type[], int index) {
@@ -425,8 +490,7 @@ void switcher(char type[], int index) {
             break;
     }
 
-    client.println("{'" + dev_str + "': '" + String(water_heater[index].state) +
-                   "'}");
+    client.println("{'" + dev_str + "': '" + String(*state) + "'}");
 }
 
 void get_current_value(String deviceString, double tempValue) {
@@ -494,6 +558,30 @@ void renderHtmlPage(char *page, WiFiClient client) {
         switcher("heater", 1);
     } else if (pagestr.indexOf("ac_1_check") != -1) {
         check_state("ac", 0);
+    } else if (pagestr.indexOf("ac_1_swing_check") != -1) {
+        check_bool("ac", ac[0].swing);
+    } else if (pagestr.indexOf("ac_1_sleep_check") != -1) {
+        check_bool("ac", ac[0].sleep);
+    } else if (pagestr.indexOf("ac_1_direct_check") != -1) {
+        check_bool("ac", ac[0].direct);
+    } else if (pagestr.indexOf("ac_1_swing_switch") != -1) {
+        switch_bool("ac", ac[0].swing);
+    } else if (pagestr.indexOf("ac_1_sleep_switch") != -1) {
+        switch_bool("ac", ac[0].sleep);
+    } else if (pagestr.indexOf("ac_1_direct_switch") != -1) {
+        switch_bool("ac", ac[0].direct);
+    } else if (pagestr.indexOf("ac_2_swing_check") != -1) {
+        check_bool("ac", ac[1].swing);
+    } else if (pagestr.indexOf("ac_2_sleep_check") != -1) {
+        check_bool("ac", ac[1].sleep);
+    } else if (pagestr.indexOf("ac_2_direct_check") != -1) {
+        check_bool("ac", ac[1].direct);
+    } else if (pagestr.indexOf("ac_2_swing_switch") != -1) {
+        switch_bool("ac", ac[1].swing);
+    } else if (pagestr.indexOf("ac_2_sleep_switch") != -1) {
+        switch_bool("ac", ac[1].sleep);
+    } else if (pagestr.indexOf("ac_2_direct_switch") != -1) {
+        switch_bool("ac", ac[1].direct);
     } else if (pagestr.indexOf("ac_2_check") != -1) {
         check_state("ac", 1);
     } else if (pagestr.indexOf("ac_1_switch") != -1) {
@@ -502,6 +590,34 @@ void renderHtmlPage(char *page, WiFiClient client) {
         switcher("ac", 1);
     } else if (pagestr.indexOf("updateTime") != -1) {
         updateNTPTime();
+    } else if (pagestr.indexOf("ac_1_mode_check") != -1) {
+        check_ac_mode(ac[0].mode);
+    } else if (pagestr.indexOf("ac_2_mode_check") != -1) {
+        check_ac_mode(ac[1].mode);
+    } else if (pagestr.indexOf("ac_1_mode_switch") != -1) {
+        switch_ac_mode(ac[0].mode);
+    } else if (pagestr.indexOf("ac_2_mode_switch") != -1) {
+        switch_ac_mode(ac[1].mode);
+    } else if (pagestr.indexOf("ac_1_fan_check") != -1) {
+        check_ac_fan(ac[0].mode);
+    } else if (pagestr.indexOf("ac_2_fan_check") != -1) {
+        check_ac_fan(ac[1].mode);
+    } else if (pagestr.indexOf("ac_1_fan_switch") != -1) {
+        switch_ac_fan(ac[0].mode);
+    } else if (pagestr.indexOf("ac_2_fan_switch") != -1) {
+        switch_ac_fan(ac[1].mode);
+    } else if (pagestr.indexOf("ac_1_temp_check") != -1) {
+        check_ac_temp(ac[0].tempLevel);
+    } else if (pagestr.indexOf("ac_2_temp_check") != -1) {
+        check_ac_temp(ac[1].tempLevel);
+    } else if (pagestr.indexOf("ac_1_temp_up") != -1) {
+        ac_temp_up(ac[0].tempLevel);
+    } else if (pagestr.indexOf("ac_2_temp_up") != -1) {
+        ac_temp_up(ac[1].tempLevel);
+    } else if (pagestr.indexOf("ac_1_temp_down") != -1) {
+        ac_temp_down(ac[0].tempLevel);
+    } else if (pagestr.indexOf("ac_2_temp_down") != -1) {
+        ac_temp_down(ac[1].tempLevel);
     } else if (pagestr.indexOf("water_heater_1_temperature") != -1) {
         get_current_value(
             "water_heater",

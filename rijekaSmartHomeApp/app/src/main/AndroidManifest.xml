@@ -14,7 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat"
         android:usesCleartextTraffic="true">
-
         <activity
             android:name=".DeviceDialog"
             android:excludeFromRecents="true"
@@ -39,9 +38,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".GraphActivity"
+            android:label="Graph"/>
 
         <receiver
             android:name=".CheckTemperatureAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name=".LogAlarmReceiver"
             android:enabled="true"
             android:exported="false" />
     </application>

@@ -16,6 +16,7 @@ class  NotificationUtils(base: Context) : ContextWrapper(base) {
 
     val MYCHANNEL_ID = "temperature_notifications_1"
     val MYCHANNEL_NAME = "Temperature alerts notifications channel"
+    var notificationIconId : Int = 0
 
     private var manager: NotificationManager? = null
 
@@ -28,10 +29,11 @@ class  NotificationUtils(base: Context) : ContextWrapper(base) {
     // Create channel for Android version 26+
     @TargetApi(Build.VERSION_CODES.O)
     private fun createChannels() {
+        println("createChannels")
         val channel = NotificationChannel(MYCHANNEL_ID, MYCHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
         channel.enableVibration(true)
 
-        //getManager().createNotificationChannel(channel)
+        if(getManager().notificationChannels.isEmpty()) getManager().createNotificationChannel(channel)
     }
 
     // Get Manager
@@ -40,18 +42,20 @@ class  NotificationUtils(base: Context) : ContextWrapper(base) {
         return manager as NotificationManager
     }
 
-    fun getNotificationBuilder(title: String, text: String): NotificationCompat.Builder {
+    fun getNotificationBuilder(title: String, text: String, iconId: Int): NotificationCompat.Builder {
+        println("notifbuilder")
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+        println("notifidbuilder: " + notificationIconId)
         return NotificationCompat.Builder(applicationContext, MYCHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(R.drawable.boiler_on)
+            .setSmallIcon(iconId)
             .setColor(Color.YELLOW)
             .setContentIntent(pendingIntent)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setAutoCancel(true)
+    //        .setAutoCancel(true)
     }
 }

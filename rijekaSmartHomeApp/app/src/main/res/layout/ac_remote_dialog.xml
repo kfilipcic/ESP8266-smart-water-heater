@@ -21,6 +21,114 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ac_remotee" />
 
+    <TextView
+        android:id="@+id/acTemperatureTV"
+        android:layout_width="194dp"
+        android:layout_height="122dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="64dp"
+        android:text="21°C"
+        android:textColor="#000000"
+        android:textSize="90sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/directTV"
+        android:layout_width="62dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="112dp"
+        android:layout_marginTop="244dp"
+        android:text="DIRECT"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/modeTextView"
+        android:layout_width="57dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="44dp"
+        android:text="MODE:"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/fanTextView"
+        android:layout_width="84dp"
+        android:layout_height="43dp"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="168dp"
+        android:text="FAN:"
+        android:textColor="#000000"
+        android:textSize="36sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/fanTV"
+        android:layout_width="84dp"
+        android:layout_height="43dp"
+        android:layout_marginStart="168dp"
+        android:layout_marginTop="168dp"
+        android:text="0/3"
+        android:textColor="#000000"
+        android:textSize="36sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/modeTV"
+        android:layout_width="57dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="44dp"
+        android:text="AUTO"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/runTV"
+        android:layout_width="32dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="220dp"
+        android:layout_marginTop="232dp"
+        android:text="run"
+        android:textColor="#F61515"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/swingTV"
+        android:layout_width="62dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="224dp"
+        android:text="SWING"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
+    <TextView
+        android:id="@+id/sleepTV"
+        android:layout_width="62dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="148dp"
+        android:layout_marginTop="224dp"
+        android:text="SLEEP"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
+
     <LinearLayout
         android:layout_width="272dp"
         android:layout_height="369dp"
@@ -81,7 +189,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/imageButton3"
+                android:id="@+id/modeBtn"
                 android:layout_width="94dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -91,7 +199,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton6"
+                android:id="@+id/tempUpBtn"
                 android:layout_width="97dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -101,7 +209,7 @@
                 app:srcCompat="@drawable/ac_remote_btn_up" />
 
             <ImageButton
-                android:id="@+id/imageButton4"
+                android:id="@+id/shortcutBtn"
                 android:layout_width="80dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -146,7 +254,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/imageButton7"
+                android:id="@+id/swingBtn"
                 android:layout_width="94dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -156,7 +264,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton9"
+                android:id="@+id/tempDownBtn"
                 android:layout_width="97dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -166,7 +274,7 @@
                 app:srcCompat="@drawable/ac_remote_btn_down" />
 
             <ImageButton
-                android:id="@+id/imageButton8"
+                android:id="@+id/fanBtn"
                 android:layout_width="80dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -211,7 +319,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/imageButton16"
+                android:id="@+id/directBtn"
                 android:layout_width="94dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -221,7 +329,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton17"
+                android:id="@+id/timerOnBtn"
                 android:layout_width="97dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -231,7 +339,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton18"
+                android:id="@+id/timerOffBtn"
                 android:layout_width="80dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -276,7 +384,7 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/imageButton10"
+                android:id="@+id/sleepBtn"
                 android:layout_width="94dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -286,7 +394,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton11"
+                android:id="@+id/turboBtn"
                 android:layout_width="97dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
@@ -296,7 +404,7 @@
                 app:srcCompat="@drawable/ac_remote_btn" />
 
             <ImageButton
-                android:id="@+id/imageButton12"
+                android:id="@+id/ledBtn"
                 android:layout_width="80dp"
                 android:layout_height="42dp"
                 android:layout_marginLeft="5dp"
