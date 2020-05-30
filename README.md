@@ -20,5 +20,5 @@
   <img height="1140" width="520" src="https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/graph_screen.png?raw=true">
 </kbd></br>Clicking the right icon on the main screen. This screen showing the stats of a device is shown.</br>
 <kbd>
-  <img height="1140" width="520" src="https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/graph_example.png?raw=true">
+  <img height="700" width="560" src="https://github.com/kfilipcic/ESP8266-smart-water-heater/blob/master/screenshots/graph_example.png?raw=true">
 </kbd></br>
